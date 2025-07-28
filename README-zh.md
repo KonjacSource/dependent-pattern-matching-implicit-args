@@ -2,31 +2,31 @@
 
 [English](README.md) | [中文](README-zh.md)
 
-A dependently-typed language with indexed inductive types supported. 
+一个支持归纳类型族的依赖类型语言。
 
-> __Note.__ This project is based on András Kovács' [elaboration-zoo](https://github.com/AndrasKovacs/elaboration-zoo) ((04-implicit-args)[https://github.com/AndrasKovacs/elaboration-zoo/tree/master/04-implicit-args]).
+> __注意.__ 本项目基于 András Kovács 的 [elaboration-zoo](https://github.com/AndrasKovacs/elaboration-zoo) ((04-implicit-args)[https://github.com/AndrasKovacs/elaboration-zoo/tree/master/04-implicit-args])。
 
-## Features
+## 特性
 
-### Inherited from elaboration-zoo
-- [x] Dependent types (elaboration-zoo)
-- [x] Bidirectional type checking 
+### 继承自 elaboration-zoo
+- [x] 依赖类型（elaboration-zoo）
+- [x] 双向类型检查 
 - [x] Type in Type
-- [x] Meta variables and implict arugments (pattern unification)
+- [x] 元变量与隐式参数
 
-### My works
-- [x] Indexed data types
-- [x] Dependent pattern matching
-- [ ] Coverage checking
-- [ ] Termination checking
+### 我的工作
+- [x] 归纳类型族
+- [x] 依赖模式匹配
+- [ ] 覆盖性检查
+- [ ] 终止性检查
 
-If you only want to know how to implement indexed data types and you do not care about metavariable solving, you can check my previous work [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching).
+如果你只关心如何实现索引数据类型且不关心元变量求解，可以参考我之前的项目 [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching)。
 
-## Example
+## 示例
 
-This is prelude definitions hard-coded in `app/Main.hs`.
+以下是硬编码在 `app/Main.hs` 中的 prelude 定义。
 
-```lean
+```agda
 data Nat where
 | zero : Nat
 | suc  : Nat -> Nat
@@ -53,9 +53,9 @@ def append : {A : U} {n m : Nat} -> Vec A n -> Vec A m -> Vec A (add n m)
 | (vcons x xs) ys = vcons x (append xs ys)
 ```
 
-## Usage 
+## 用法 
 
-You can use repl to interact with this project.
+你可以使用 repl 与本项目进行交互。
 
 ```
 system> stack repl
@@ -71,6 +71,6 @@ Available commands:
   :nf <expr>   - typecheck expression and print its normal form
 ```
 
-Or compile this project and use command argument "repl" to start repl.
+或者编译本项目并使用命令参数 "repl" 启动 repl。
 
-Note. use `printcxt[e]` or `sorry` in a term to print the context.
+注意：在项中使用 `printcxt[e]` 或 `sorry` 来打印上下文。
