@@ -1,0 +1,123 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           dependent-pattern-matching-implicit-args
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/dependent-pattern-matching-implicit-args#readme>
+homepage:       https://github.com/KonjacSource/dependent-pattern-matching-implicit-args#readme
+bug-reports:    https://github.com/KonjacSource/dependent-pattern-matching-implicit-args/issues
+author:         Konjac Source
+maintainer:     1435771606@qq.com
+copyright:      2025 Konjac Source
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/KonjacSource/dependent-pattern-matching-implicit-args
+
+library
+  exposed-modules:
+      Common
+      Cxt
+      Cxt.Type
+      Definition
+      DefinitionElaboration
+      Elaboration
+      Errors
+      Evaluation
+      Metacontext
+      Parser
+      Presyntax
+      Pretty
+      Syntax
+      Unification
+      Value
+  other-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  autogen-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  hs-source-dirs:
+      src
+  default-extensions:
+      DerivingVia
+      DeriveAnyClass
+      FlexibleContexts
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      PatternSynonyms
+      StandaloneDeriving
+      Strict
+      TupleSections
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , megaparsec
+  default-language: Haskell2010
+
+executable dependent-pattern-matching-implicit-args-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  autogen-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  hs-source-dirs:
+      app
+  default-extensions:
+      DerivingVia
+      DeriveAnyClass
+      FlexibleContexts
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      PatternSynonyms
+      StandaloneDeriving
+      Strict
+      TupleSections
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , dependent-pattern-matching-implicit-args
+    , megaparsec
+  default-language: Haskell2010
+
+test-suite dependent-pattern-matching-implicit-args-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  autogen-modules:
+      Paths_dependent_pattern_matching_implicit_args
+  hs-source-dirs:
+      test
+  default-extensions:
+      DerivingVia
+      DeriveAnyClass
+      FlexibleContexts
+      GeneralizedNewtypeDeriving
+      LambdaCase
+      OverloadedStrings
+      PatternSynonyms
+      StandaloneDeriving
+      Strict
+      TupleSections
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , dependent-pattern-matching-implicit-args
+    , megaparsec
+  default-language: Haskell2010

@@ -1,0 +1,74 @@
+name:                dependent-pattern-matching-implicit-args
+version:             0.1.0.0
+github:              "KonjacSource/dependent-pattern-matching-implicit-args"
+license:             BSD-3-Clause
+author:              "Konjac Source"
+maintainer:          "1435771606@qq.com"
+copyright:           "2025 Konjac Source"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/dependent-pattern-matching-implicit-args#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- megaparsec
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+default-extensions:
+- DerivingVia
+- DeriveAnyClass
+- FlexibleContexts
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- OverloadedStrings
+- PatternSynonyms
+- StandaloneDeriving
+- Strict
+- TupleSections
+- ViewPatterns
+
+library:
+  source-dirs: src
+
+executables:
+  dependent-pattern-matching-implicit-args-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - dependent-pattern-matching-implicit-args
+
+tests:
+  dependent-pattern-matching-implicit-args-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - dependent-pattern-matching-implicit-args
