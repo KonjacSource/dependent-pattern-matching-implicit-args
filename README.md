@@ -20,7 +20,7 @@ A dependently-typed language with indexed inductive types supported.
 - [ ] Coverage checking
 - [ ] Termination checking
 
-If you only want to know how to implement indexed data types and you do not care about metavariable solving, you can check my previous work [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching).
+If you only want to know how to implement indexed data types and do not care about metavariable solving, you can check my previous work [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching).
 
 ## Example
 
