@@ -9,7 +9,7 @@ A dependently-typed language with indexed inductive types supported.
 ## Features
 
 ### Inherited from elaboration-zoo
-- [x] Dependent types (elaboration-zoo)
+- [x] Dependent types
 - [x] Bidirectional type checking 
 - [x] Type in Type
 - [x] Meta variables and implict arugments (pattern unification)

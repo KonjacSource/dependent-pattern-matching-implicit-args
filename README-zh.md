@@ -9,7 +9,7 @@
 ## 特性
 
 ### 继承自 elaboration-zoo
-- [x] 依赖类型（elaboration-zoo）
+- [x] 依赖类型
 - [x] 双向类型检查 
 - [x] Type in Type
 - [x] 元变量与隐式参数
