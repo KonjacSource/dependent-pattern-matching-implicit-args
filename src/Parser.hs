@@ -14,6 +14,8 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import Common
 import Presyntax
 import Definition 
+import Control.Exception (throwIO)
+import Errors (TopLevelError(..))
 
 --------------------------------------------------------------------------------
 
@@ -299,7 +301,7 @@ parseStringProgram fp src =
     case parse (ws >> pProgram <* eof) fp src of
     Left e -> do
       putStrLn $ errorBundlePretty e
-      exitFailure
+      throwIO TopLevelError
     Right t ->
       pure t
 

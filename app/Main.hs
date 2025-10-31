@@ -21,6 +21,8 @@ import qualified Data.Map as M
 import Data.IORef 
 import Data.Char (isSpace)
 import Definition (Def(DefFunc))
+import Errors (TopLevelError(..))
+
 
 preludeSrc = unlines
   [ "data Nat where"
@@ -108,7 +110,7 @@ mainWith getOpt getRaw = do
         displayMetas defs'
     ["load"] -> do 
       putStrLn "Expecting a file."
-    ["repl"] -> repl
+    ["repl"] -> repl' predefs
       
     _ -> putStrLn helpMsg
 
@@ -120,7 +122,10 @@ main' :: String -> String -> IO ()
 main' mode src = mainWith (pure [mode]) ((,src) <$> parseString src)
 
 repl :: IO () 
-repl = do
+repl = mainWith (pure ["repl"]) parseStdin
+
+repl' :: Defs -> IO () 
+repl' ori_defs = do
   reset
   prelude <- parseStringProgram "(Prelude)" preludeSrc
   predefs <- checkProg preludeSrc M.empty prelude
@@ -131,7 +136,8 @@ repl = do
     t <- parseString s 
     defs <- readIORef defsR
     infer ((emptyCxt (initialPos s)){defs = defs}) t
-      `catch` \e -> displayError s e >> exitSuccess  
+      `catch` \e -> displayError s e >> throwIO TopLevelError
+
   loop defsR = do   
     putStr "repl> "
     cmd <- getLine
@@ -141,6 +147,7 @@ repl = do
         putStrLn "  :h           - show this help message"
         putStrLn "  :q           - quit"
         putStrLn "  :l <file>    - load a file"
+        putStrLn "  :r           - reset (not reload) to original definitions"
         putStrLn "  :metas       - display unsolved metas"
         putStrLn "  :func <name> - display function definition"
         putStrLn "  :t <expr>    - typecheck expression"
@@ -172,6 +179,9 @@ repl = do
           putStrLn "Unsolved metas."
           displayMetas defs'
         loop defsR
+      [":r"] -> do 
+        writeIORef defsR ori_defs
+        loop defsR
       [":metas"] -> do
         defs <- readIORef defsR
         displayMetas defs
@@ -186,7 +196,7 @@ repl = do
       _ -> do 
         putStrLn "Unknown command."
         loop defsR
-
+    `catch` \TopLevelError -> loop defsR
 
 ex2 :: IO ()
 ex2 = main' "nf" $ unlines 

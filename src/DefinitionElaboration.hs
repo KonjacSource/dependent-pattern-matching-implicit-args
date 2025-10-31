@@ -356,8 +356,6 @@ insertMutualBody defs headers = \case
           d <- checkData sp defs (RDataDef name ty cons)
           insertMutualBody (insertCons (insertData defs d) (getConstructors d)) headers rest
         _ -> throwIO $ DefError ((emptyCxt sp){defs = defs}) $ NameNotFoundOrMismatch name
-    
-  
 
 checkProg :: HasCallStack => String -> Defs -> Program -> IO Defs 
 checkProg src defs prog = checkProg' defs prog `catch` \ e -> do 

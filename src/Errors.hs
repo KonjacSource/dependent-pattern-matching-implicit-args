@@ -16,6 +16,9 @@ import GHC.Stack (HasCallStack)
 data UnifyError = UnifyError
   deriving (Show, Exception)
 
+data TopLevelError = TopLevelError
+  deriving (Show, Exception)
+
 data ElabError
   = NameNotInScope Name
   | CantUnify Tm Tm
