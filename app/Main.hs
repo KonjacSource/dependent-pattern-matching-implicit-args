@@ -48,6 +48,10 @@ preludeSrc = unlines
   , "| vnil         ys = ys"
   , "| (vcons x xs) ys = vcons x (append xs ys)"
 
+  , "def J : (A : U) (P : (x : A) (y : A) -> Id x y -> U)"
+  , "    (m : (x : A) -> P x x (refl x))"
+  , "    (a : A) (b : A) (p : Id a b) -> P a b p"
+  , "| A P m a b (refl x) = m x"
   ]
 
 --------------------------------------------------------------------------------

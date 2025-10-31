@@ -58,5 +58,3 @@ end
 
 -- G1 = top, top -> top
 def G1 : Ctx | = extend (extend empty top) (arr top top)
-
-def lookupTest : Ty = lookup {G1} (iz) 

@@ -363,3 +363,4 @@ checkProg :: HasCallStack => String -> Defs -> Program -> IO Defs
 checkProg src defs prog = checkProg' defs prog `catch` \ e -> do 
   displayError src e 
   exitSuccess
+  
