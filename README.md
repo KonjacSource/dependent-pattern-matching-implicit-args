@@ -17,6 +17,10 @@ A dependently-typed language with indexed inductive types supported.
 ### My works
 - [x] Indexed data types
 - [x] Dependent pattern matching
+- [x] Mutual inductive types
+- [x] Mutual recursive
+- [x] Inductive-inductive types
+- [x] Inductive-recursive types
 - [ ] Coverage checking
 - [ ] Termination checking
 
