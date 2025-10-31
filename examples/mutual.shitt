@@ -1,0 +1,62 @@
+data Bool : U where 
+| true  : Bool
+| false : Bool
+
+mutual 
+
+  def odd : Nat -> Bool 
+  def even : Nat -> Bool
+
+begin
+
+  def odd 
+  | zero     = false
+  | (suc n)  = even n
+
+  def even
+  | zero    = true
+  | (suc n) = odd n
+
+end
+
+-- STLC
+mutual 
+
+  data Ctx : U 
+  data Ty : U 
+  data Tm : (G : Ctx) -> Ty -> U
+  data Ix : Ctx -> U
+  def lookup : {G : Ctx} -> Ix G -> Ty 
+
+begin
+
+  data Ctx 
+  | empty : Ctx
+  | extend : (G : Ctx) -> Ty -> Ctx
+
+  data Ty 
+  | top : Ty 
+  | arr : Ty -> Ty -> Ty
+
+  data Tm 
+  | tt : {G : Ctx} -> Tm G top
+  | lam : {G : Ctx} {A B : Ty} -> (Tm (extend G A) B) -> Tm G (arr A B)
+  | app : {G : Ctx} {A B : Ty} -> (Tm G (arr A B)) -> (Tm G A) -> Tm G B
+  | vat : {G : Ctx} (i : Ix G) -> Tm G (lookup i)
+
+  data Ix 
+  | iz : {G : Ctx} {A : Ty} -> Ix (extend G A)
+  | is : {G : Ctx} {A : Ty} -> Ix G -> Ix (extend G A)
+
+  def lookup
+  | {extend G A} iz = A 
+  | {G} (is i) = lookup i
+
+end
+
+-- Example 
+
+-- G1 = top, top -> top
+def G1 : Ctx | = extend (extend empty top) (arr top top)
+
+def lookupTest : Ty = lookup {G1} (iz) 

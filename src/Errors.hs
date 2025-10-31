@@ -34,6 +34,7 @@ data DefElabError
   | DataMustInU Name
   | ClauseArityNonsame
   | UnsolvedMetaInFuncDef Name
+  | NameNotFoundOrMismatch Name 
   deriving (Show, Exception)
  
 data Error 

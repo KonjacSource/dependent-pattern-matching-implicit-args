@@ -94,7 +94,7 @@ data RFuncDef = RFuncDef
   { funcNameR :: Name
   , funcTypeR :: R.Tm -- ^ Type of the function
   , funcClausesR :: [RClause]
-  }  
+  }
 
 type RTelescope = [(Name, Icit, R.Tm)]
 
@@ -104,7 +104,17 @@ data RDataDef = RDataDef
   , dataConsR :: [(Name, R.Tm)]
   } deriving Show 
 
-data RDef = RDefData RDataDef | RDefFunc RFuncDef
+data Header = FunHeader Name R.Tm | DataHeader Name R.Tm
+  deriving Show 
+
+data Body = FunBody Name [RClause] | DataBody Name [(Name, R.Tm)]
+
+data RMutalBlock = RMutalBlock
+  { mutualSig  :: [(SourcePos, Header)]
+  , mutualBody :: [(SourcePos, Body)]
+  }
+
+data RDef = RDefData RDataDef | RDefFunc RFuncDef | RDefMutual RMutalBlock
 
 type Program = [(SourcePos, RDef)]
 

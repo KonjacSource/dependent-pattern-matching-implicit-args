@@ -38,7 +38,7 @@ pArrow     = symbol "→" <|> symbol "->"
 pBind      = pIdent <|> symbol "_"
 
 keyword :: String -> Bool
-keyword x = x == "let" || x == "λ" || x == "U" || x == "def" || x == "data" || x == "where" || x == "printcxt" || x == "sorry"
+keyword x = x == "let" || x == "λ" || x == "U" || x == "def" || x == "data" || x == "where" || x == "printcxt" || x == "sorry" || x == "mutual" || x == "begin" || x == "end"
 
 pIdent :: Parser Name
 pIdent = try $ do
@@ -220,10 +220,75 @@ pConstructor = do
   ty <- char ':' >> pTm 
   pure (n, ty)
 
+{-
+mutual_block ::= 
+  `mutual`
+    mutual_sig
+    ... 
+  `begin`
+    mutual_body
+    ...
+  `end`
+
+mutual_sig ::=
+  func_header | data_header
+func_header ::=
+  `def` id `:` tm
+data_header ::=
+  `data` id `:` tm
+
+mutual_body ::=
+  func_body | data_body
+func_body ::=
+  `def` id 
+    clause
+    ...
+data_body ::=
+  `data` id 
+    `|` id `:` tm
+    ...
+-}
+
+pMutualBlock :: Parser RMutalBlock
+pMutualBlock = do
+  pKeyword "mutual"
+  sigs <- many pMutualSig
+  pKeyword "begin"
+  bodys <- many pMutualBody
+  pKeyword "end"
+  pure $ RMutalBlock sigs bodys
+
+pMutualSig :: Parser (SourcePos, Header)
+pMutualSig = do 
+  spos <- getSourcePos
+  header <- (pKeyword "def" >> do 
+                name <- pIdent
+                ty <- char ':' >> pTm
+                pure $ FunHeader name ty)
+            <|> (pKeyword "data" >> do 
+                name <- pIdent
+                ty <- char ':' >> pTm
+                pure $ DataHeader name ty)
+  pure (spos, header)
+
+pMutualBody :: Parser (SourcePos, Body)
+pMutualBody = do
+  spos <- getSourcePos
+  body <- (pKeyword "def" >> do 
+              name <- pIdent
+              cls <- many pClause
+              pure $ FunBody name cls)
+          <|> (pKeyword "data" >> do 
+              name <- pIdent
+              cls <- many pConstructor
+              pure $ DataBody name cls)
+  pure (spos, body)
+
+
 pDef :: Parser (SourcePos, RDef)
 pDef = do 
   spos <- getSourcePos
-  def <- (pFunc >>= pure . RDefFunc) <|> (pData >>= pure . RDefData)
+  def <- (pFunc >>= pure . RDefFunc) <|> (pData >>= pure . RDefData) <|> (pMutualBlock >>= pure . RDefMutual)
   pure (spos, def)
 
 pProgram :: Parser Program 

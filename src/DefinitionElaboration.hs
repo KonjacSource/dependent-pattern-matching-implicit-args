@@ -239,8 +239,7 @@ insertFunc defs func = M.insert (funcName func) (DefFunc func) defs
 checkFunc ::  Cxt -> RFuncDef -> IO FuncDef
 checkFunc ctx rfun = do 
   m <- readIORef nextMeta
-  prefun <- checkFunc1 ctx (rfun {funcClausesR = []})
-  -- this allowing recursion.
+  prefun <- checkFunc1 ctx (rfun {funcClausesR = []}) -- this allowing recursion.
   fun <- checkFunc1 (ctx {defs = M.insert (funcNameR rfun) (DefFunc prefun) (defs ctx)}) rfun 
   -- TODO : Check Coverage.
   -- putStrLn $ showFunc fun
@@ -252,7 +251,7 @@ insertData :: Defs -> DataDef -> Defs
 insertData defs dat = M.insert (dataName dat) (DefData dat) defs
 
 checkData :: SourcePos -> Defs -> RDataDef -> IO DataDef
-checkData s defs rdat = do 
+checkData s defs rdat = do
     ix_ty <- E.check (emptyCxt s){defs = defs} (dataIxR rdat) VU >>= checkIx . nf defs []
     -- (snd -> ix_ty) <- checkTelescope  ()
     let defs' = insertData defs (DataDef (dataNameR rdat) ix_ty [])
@@ -313,6 +312,52 @@ checkProg' defs ((sp, d):ds) = case d of
   RDefData d -> do 
     d <- checkData sp defs d 
     checkProg' (insertCons (insertData defs d) (getConstructors d)) ds
+  RDefMutual mb -> do
+    let sigs = mutualSig mb
+    let bodys = mutualBody mb
+    defs' <- insertMutualSig defs sigs
+    defs'' <- insertMutualBody defs' (map snd sigs) bodys
+    checkProg' defs'' ds
+  
+insertMutualSig :: Defs -> [(SourcePos, Header)] -> IO Defs
+insertMutualSig defs = \case 
+  [] -> pure defs 
+  (sp, h) : rest -> case h of 
+    FunHeader name ty -> do 
+      checkFunc1 ((emptyCxt sp){defs = defs}) (RFuncDef name ty []) >>= \ f -> 
+        insertMutualSig (insertFunc defs f) rest
+    DataHeader name ty -> do
+      checkData sp defs (RDataDef name ty []) >>= \ d ->
+        insertMutualSig (insertData defs d) rest
+
+lookupHeader :: Cxt -> Name -> [Header] -> IO Header 
+lookupHeader cxt n = \case 
+  [] -> throwIO $ DefError cxt $ NameNotFoundOrMismatch n
+  (h:hs) -> case h of 
+    FunHeader name ty | name == n -> pure h
+    DataHeader name ty | name == n -> pure h
+    _ -> lookupHeader cxt n hs
+
+insertMutualBody :: Defs -> [Header] -> [(SourcePos, Body)] -> IO Defs
+insertMutualBody defs headers = \case
+  [] -> pure defs 
+  (sp, b) : rest -> case b of 
+    FunBody name cls -> do 
+      h <- lookupHeader ((emptyCxt sp){defs = defs}) name headers
+      case h of 
+        FunHeader _ ty -> do 
+          f <- checkFunc1 ((emptyCxt sp){defs = defs}) (RFuncDef name ty cls)
+          insertMutualBody (insertFunc defs f) headers rest
+        _ -> throwIO $ DefError ((emptyCxt sp){defs = defs}) $ NameNotFoundOrMismatch name
+    DataBody name cons -> do 
+      h <- lookupHeader ((emptyCxt sp){defs = defs}) name headers
+      case h of 
+        DataHeader _ ty -> do 
+          d <- checkData sp defs (RDataDef name ty cons)
+          insertMutualBody (insertCons (insertData defs d) (getConstructors d)) headers rest
+        _ -> throwIO $ DefError ((emptyCxt sp){defs = defs}) $ NameNotFoundOrMismatch name
+    
+  
 
 checkProg :: HasCallStack => String -> Defs -> Program -> IO Defs 
 checkProg src defs prog = checkProg' defs prog `catch` \ e -> do 

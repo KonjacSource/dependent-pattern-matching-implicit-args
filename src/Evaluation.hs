@@ -106,7 +106,9 @@ eval defs env = \case
   Meta m             -> vMeta env m 
   InsertedMeta m bds -> vAppBDs defs env (vMeta env m) bds
   Call f             -> case M.lookup f defs of
-                        Just (DefFunc f) -> VFunc f [] -- TODO: eval 0-arity function
+                        Just (DefFunc f) 
+                          | arity f == 0 && not (null $ funcClauses f) -> eval defs env (clauseRhs (head (funcClauses f))) -- eval 0-arity function
+                          | otherwise-> VFunc f [] 
                         Just (DefData d) -> VData d []
                         Just (DefCons c) -> VCons c []
                         Nothing -> error "eval: impossible"
