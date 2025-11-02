@@ -21,8 +21,12 @@ A dependently-typed language with indexed inductive types supported.
 - [x] Mutual recursive
 - [x] Inductive-inductive types
 - [x] Inductive-recursive types
-- [ ] Coverage checking
+- [x] Coverage checking
+- [x] Soundness
 - [ ] Termination checking
+- [ ] Positivity checking
+- [ ] Universe polymorphism
+- [ ] Consistency
 
 If you only want to know how to implement indexed data types and do not care about metavariable solving, you can check my previous work [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching).
 

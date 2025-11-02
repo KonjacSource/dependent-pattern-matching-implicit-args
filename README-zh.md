@@ -21,8 +21,12 @@
 - [x] 互递归函数
 - [x] 归纳归纳类型
 - [x] 归纳递归类型
-- [ ] 覆盖性检查
+- [x] 覆盖性检查
+- [x] 可靠性
 - [ ] 终止性检查
+- [ ] 极性检查
+- [ ] 宇宙多态
+- [ ] 一致性
 
 如果你只关心如何实现索引数据类型且不关心元变量求解，可以参考我之前的项目 [dependent-pattern-matching](http://github.com/KonjacSource/dependent-pattern-matching)。
 

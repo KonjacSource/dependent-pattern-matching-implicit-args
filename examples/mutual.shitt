@@ -61,3 +61,5 @@ def G1 : Ctx = extend (extend empty top) (arr top top)
 
 def tm1 : Tm G1 top = 
   app (var {G1} iz) tt
+
+
