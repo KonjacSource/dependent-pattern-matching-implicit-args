@@ -1,4 +1,4 @@
-# dependent-pattern-matching-implicit-args
+# ShiTT2
 
 [English](README.md) | [中文](README-zh.md)
 
