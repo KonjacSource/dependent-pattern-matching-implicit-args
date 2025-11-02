@@ -59,8 +59,52 @@ def trans : {A : U} {x : A} (y : A) {z : A} -> Id x y -> Id y z -> Id x z
 def append : {A : U} {n m : Nat} -> Vec A n -> Vec A m -> Vec A (add n m)
 | vnil         ys = ys
 | (vcons x xs) ys = vcons x (append xs ys)
+```
 
+这是一个归纳-归纳类型和归纳-递归类型的示例.
 
+```lean
+mutual 
+
+  data Ctx : U 
+  data Ty : U 
+  data Tm : (G : Ctx) -> Ty -> U
+  data Ix : Ctx -> U
+  def lookup : {G : Ctx} -> Ix G -> Ty 
+
+begin
+
+  data Ctx 
+  | empty : Ctx
+  | extend : (G : Ctx) -> Ty -> Ctx
+
+  data Ty 
+  | top : Ty 
+  | arr : Ty -> Ty -> Ty
+
+  data Tm 
+  | tt : {G : Ctx} -> Tm G top
+  | lam : {G : Ctx} {A B : Ty} -> (Tm (extend G A) B) -> Tm G (arr A B)
+  | app : {G : Ctx} {A B : Ty} -> (Tm G (arr A B)) -> (Tm G A) -> Tm G B
+  | var : {G : Ctx} (i : Ix G) -> Tm G (lookup i)
+
+  data Ix 
+  | iz : {G : Ctx} {A : Ty} -> Ix (extend G A)
+  | is : {G : Ctx} {A : Ty} -> Ix G -> Ix (extend G A)
+
+  def lookup
+  | {extend G A} iz = A 
+  | {G} (is i) = lookup i
+
+end
+
+-- Example 
+
+-- G1 = top, top -> top
+def G1 : Ctx = extend (extend empty top) (arr top top)
+
+def tm1 : Tm G1 top = 
+  app (var {G1} iz) tt
 ```
 
 ## 用法 
