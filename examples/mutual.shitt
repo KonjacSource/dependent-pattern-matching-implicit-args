@@ -42,7 +42,7 @@ begin
   | tt : {G : Ctx} -> Tm G top
   | lam : {G : Ctx} {A B : Ty} -> (Tm (extend G A) B) -> Tm G (arr A B)
   | app : {G : Ctx} {A B : Ty} -> (Tm G (arr A B)) -> (Tm G A) -> Tm G B
-  | vat : {G : Ctx} (i : Ix G) -> Tm G (lookup i)
+  | var : {G : Ctx} (i : Ix G) -> Tm G (lookup i)
 
   data Ix 
   | iz : {G : Ctx} {A : Ty} -> Ix (extend G A)
@@ -57,4 +57,7 @@ end
 -- Example 
 
 -- G1 = top, top -> top
-def G1 : Ctx | = extend (extend empty top) (arr top top)
+def G1 : Ctx = extend (extend empty top) (arr top top)
+
+def tm1 : Tm G1 top = 
+  app (var {G1} iz) tt
