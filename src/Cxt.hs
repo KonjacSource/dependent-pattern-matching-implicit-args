@@ -10,6 +10,7 @@ import Value
 import qualified Data.Map as M
 import Definition
 import Control.Monad (join)
+import Debug.Trace (trace)
 
 -- Elaboration context
 --------------------------------------------------------------------------------
@@ -35,7 +36,8 @@ showCxt ctx@(Cxt values _ types _ _ defs) = "\n" ++ go values types where
 
 showFunc :: FuncDef -> String 
 showFunc (FuncDef funcName fty cls) = "def " ++ funcName ++ " : " ++ showTm0 fty ++ join (map showCls cls) where 
-  showCls (Clause ps rhs) = "\n| " ++ join (map showPat ps) ++ "= " ++ prettyTm 0 (genNames ps) rhs [] 
+  showCls (Clause ps rhs) = 
+    "\n| " ++ join (map showPat ps) ++ "= " ++ prettyTm 0 (genNames ps) rhs [] 
   -- TODO : Make this better
   showPat (p, i) = paren i p where 
     paren Impl p = "{" ++ showPat' p ++ "} " 
@@ -43,7 +45,7 @@ showFunc (FuncDef funcName fty cls) = "def " ++ funcName ++ " : " ++ showTm0 fty
     showPat' (PatVar x) = x 
     showPat' (PatCon c ps) = c ++ " " ++ join (map showPat ps)
   genNames [] = [] 
-  genNames (reverse -> p:ps) = case fst p of 
+  genNames (p:ps) = case fst p of 
     PatVar x -> genNames ps ++ [x]
     PatCon _ ps' -> genNames ps ++ genNames ps'
 

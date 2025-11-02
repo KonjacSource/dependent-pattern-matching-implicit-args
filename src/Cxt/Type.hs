@@ -7,13 +7,13 @@ import qualified Data.Map as M
 import Definition
 
 -- Elaboration context
---------------------------------------------------------------------------------
+-------------------------- 
 
 data NameOrigin = Inserted | Source deriving Eq
 type Types = [(String, NameOrigin, VTy)]
 
 data Cxt = Cxt {           -- used for:
-                           -----------------------------------
+  ----------------------------------------------------------------
     env   :: Env           -- evaluation
   , lvl   :: Lvl           -- unification
   , types :: Types         -- raw name lookup, pretty printing

@@ -7,6 +7,8 @@ module Common (
   , initialPos) where
 
 import Text.Megaparsec
+import Control.Exception
+import GHC.IO (unsafePerformIO)
 
 type Name = String
 type Id = String
@@ -33,3 +35,14 @@ infixl 4 :>
 pattern (:>) :: [a] -> a -> [a]
 pattern xs :> x <- x:xs where (:>) xs ~x = x:xs
 {-# complete (:>), [] #-}
+
+-- Throwable Maybe 
+-------------------
+
+instance Exception () where 
+
+might :: IO a -> Maybe a 
+might action = unsafePerformIO $ (action >>= pure . Just) `catch` \() -> pure Nothing
+
+quitMight :: IO a 
+quitMight = throwIO ()

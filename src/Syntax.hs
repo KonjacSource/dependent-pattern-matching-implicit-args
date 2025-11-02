@@ -17,6 +17,12 @@ data Tm
   | InsertedMeta MetaVar [BD]
   deriving Show
 
+eApp :: Tm -> Tm -> Tm
+eApp t u = App t u Expl
+
+iApp :: Tm -> Tm -> Tm
+iApp t u = App t u Impl
+
 noMetas :: Tm -> Bool
 noMetas = \case
   Var _ -> True

@@ -1,0 +1,15 @@
+def uip : {B : U} {x x1 : B} (p q: Id x x1) -> Id {Id x x1} p q  
+| (refl x) (refl x) = refl (refl _)
+
+def K : {A : U} {a : A} (P : Id a a -> U) (p : P (refl _)) (e : Id a a) -> P e  
+| P p (refl x) = p
+
+data Imf : {A B : U} (f : A -> B) (_ : B) -> U where 
+| imf : {A B : U} {f : A -> B} (x : A) -> Imf f (f x) 
+
+def invf : {A B : U} (f : A -> B) (y : B) -> Imf f y -> A  
+-- | f y (imf x) = x
+
+-- I don't know if there should be a case refl for type Id {_B} (f x) (g x)
+-- def test : {A B : U} (f g : A -> B) (x : A) -> Id (f x) (g x) -> Id f g 
+-- | f g x (refl y) = sorry 

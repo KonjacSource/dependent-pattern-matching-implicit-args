@@ -1,5 +1,5 @@
 
-module Evaluation (($$), quote, eval, nf, force, lvl2Ix, vApp, quoteCxt, evalCxt, fv, fvSp, force', p2v, updateVal) where
+module Evaluation where
 
 import Common
 import Metacontext
@@ -14,20 +14,20 @@ import Text.Printf (printf)
 
 
 data MatchResult
-  = MatchSuc Env   -- ^ 匹配成功
+  = MatchSuc Env   -- ^ Match succeeded
   | MatchStuck MatchBlocker
-  -- ^ 匹配卡住了, 并返回卡住的相关信息, 这在Coverage Check的时候会用到
+  -- ^ Match stuck on a variable or function or unsolved meta, return the blocker info, this will be used in coverage checking.
   | MatchFailed    -- ^ c != c'
 
 data MatchBlocker = BVar Lvl | BFunc FuncDef | BFlex MetaVar
 
--- | 注意, 虽然在这个项目中模式匹配总是发生在顶层, 
--- 但是我们可能会扩展这个系统, 加入模块, 或是句内 match 语句.
+-- | Note: Although pattern matching in this project always occurs at the top level,
+-- | we may extend the system to add modules or inline `match` expressions.
 match1 :: Defs -> Env -> Pattern -> Val -> MatchResult
 match1 defs env pat val = case (pat, val) of
   (PatVar x, v) -> MatchSuc (v : env)
   (PatCon c ps, VCons c_def args)
-    | c == consName c_def -> match defs env ps (reverse args)
+    | c == consName c_def -> match defs env ps args
     | otherwise -> MatchFailed
   (PatCon _ _, VU)          -> MatchFailed
   (PatCon _ _, VData _ _)   -> MatchFailed
@@ -38,16 +38,16 @@ match1 defs env pat val = case (pat, val) of
   (PatCon _ _, VHold f _)   -> MatchStuck (BFunc f)
   (PatCon _ _, VFlex m _ _) -> MatchStuck (BFlex m)
 
--- TODO : BUG> The reason is that Spine is a reversed list
 match :: Defs -> Env -> [(Pattern, Icit)] -> Spine -> MatchResult
-match defs env [] [] = MatchSuc env
-match defs env pats@((p, i):ps) vals@(((a, i'):as)) 
-  | i == i' = 
-    case match1 defs env p a of
-      MatchFailed -> MatchFailed
-      MatchStuck l -> MatchStuck l
-      MatchSuc env' -> match defs env' ps as
-match _ _ ps vs = error $ "match: impossible\n when matching: " ++ show ps ++ " against " ++ show vs
+match defs env pats vals = go defs env pats (reverse vals) where
+  go defs env [] [] = MatchSuc env
+  go defs env pats@((p, i):ps) vals@(((a, i'):as)) 
+    | i == i' = 
+      case match1 defs env p a of
+        MatchFailed -> MatchFailed
+        MatchStuck l -> MatchStuck l
+        MatchSuc env' -> go defs env' ps as
+  go _ _ ps vs = error $ "match: impossible\n when matching: " ++ show ps ++ " against " ++ show vs
 
 infixl 8 $$
 ($$) :: HasCallStack => (Defs, Closure) -> Val -> Val
@@ -73,7 +73,7 @@ evalFun defs env f [] sp = VHold f sp -- No matchable clause yet.
 evalFun defs env f (c:cs) sp
   | length sp < arity f = VFunc f sp -- Wait
   | otherwise = -- `length sp == arity f`
-      case match defs env (clausePatterns c) (reverse sp) of
+      case match defs env (clausePatterns c) sp of
         MatchFailed -> evalFun defs env f cs sp --Failed
         MatchStuck _ -> VHold f sp       -- Stucked
         MatchSuc env' -> eval defs env' (clauseRhs c) -- Succeeded
@@ -167,7 +167,7 @@ fv def dep = nub . \case
   VData _ sp -> fvSp def dep sp 
   VU -> []
 
-
+-- dep is the old context depth, we will assign new levels to variables in pattern
 p2v :: Defs -> Lvl -> Pattern -> Val
 p2v defs dep = fst . go1 dep where
 
@@ -191,4 +191,7 @@ p2v defs dep = fst . go1 dep where
 updateVal :: Cxt -> Val -> Val
 updateVal ctx = evalCxt ctx . quote (defs ctx) (env ctx) (lvl ctx)
 
-
+updateSp :: Cxt -> Spine -> Spine
+updateSp ctx = \case
+  []           -> []
+  sp :> (v, i) -> updateSp ctx sp :> (updateVal ctx v, i)

@@ -77,7 +77,7 @@ mainWith getOpt getRaw = do
         (t, file) <- getRaw
         defs <- readIORef defsR
         infer ((emptyCxt (initialPos file)){defs = defs}) t
-          `catch` \e -> displayError file e >> exitSuccess
+          `catch` \e -> displayError file e >> throwIO e
 
   getOpt >>= \case
     ["--help"] -> putStrLn helpMsg
@@ -122,7 +122,13 @@ main' :: String -> String -> IO ()
 main' mode src = mainWith (pure [mode]) ((,src) <$> parseString src)
 
 repl :: IO () 
-repl = mainWith (pure ["repl"]) parseStdin
+repl = do 
+  reset
+  prelude <- parseStringProgram "(Prelude)" preludeSrc
+  predefs <- checkProg "prelude" M.empty prelude
+  defsR <- newIORef predefs
+  repl' predefs
+
 
 repl' :: Defs -> IO () 
 repl' ori_defs = do
@@ -170,7 +176,7 @@ repl' ori_defs = do
         src <- readFile fp 
         prog <- parseStringProgram fp src
         defs <- readIORef defsR
-        defs' <- checkProg src defs prog
+        defs' <- checkProg src defs prog `catch` ((\e -> loop defsR >> error "unreachable") :: Error -> IO Defs)
         writeIORef defsR defs'
         done <- allSolved
         if done then 
@@ -197,7 +203,7 @@ repl' ori_defs = do
         putStrLn "Unknown command."
         loop defsR
     `catch` \TopLevelError -> loop defsR
-
+ 
 ex2 :: IO ()
 ex2 = main' "nf" $ unlines 
   [ "let v1 = vcons zero (vcons (suc zero) vnil);"

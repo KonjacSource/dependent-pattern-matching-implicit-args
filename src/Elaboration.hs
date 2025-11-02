@@ -1,5 +1,5 @@
 
-module Elaboration (check, infer, unify, unifyCatch) where
+module Elaboration (check, infer, unify, unifyCatch, findType) where
 
 import Control.Exception
 import Control.Monad
@@ -188,3 +188,7 @@ infer cxt = \case
     a <- evalCxt cxt <$> freshMeta cxt
     t <- freshMeta cxt
     pure (t, a)
+
+findType :: Cxt -> Lvl -> VTy
+findType cxt (lvl2Ix (lvl cxt) -> unIx -> ix) = case types cxt !! ix of
+  (_, _, a) -> a
