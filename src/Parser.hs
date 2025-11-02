@@ -40,7 +40,7 @@ pArrow     = symbol "→" <|> symbol "->"
 pBind      = pIdent <|> symbol "_"
 
 keyword :: String -> Bool
-keyword x = x == "let" || x == "λ" || x == "U" || x == "def" || x == "data" || x == "where" || x == "printcxt" || x == "sorry" || x == "mutual" || x == "begin" || x == "end"
+keyword x = x == "let" || x == "λ" || x == "U" || x == "def" || x == "data" || x == "where" || x == "printcxt" || x == "sorry" || x == "mutual" || x == "begin" || x == "end" || x == "absurd"
 
 pIdent :: Parser Name
 pIdent = try $ do
@@ -118,8 +118,14 @@ pLet = do
   u <- pTm
   pure $ Let x (maybe Hole id ann) t u
 
+pAbsurd :: Parser Tm
+pAbsurd = do
+  pKeyword "absurd"
+  t <- pTm
+  pure $ Absurd t
+
 pTm :: Parser Tm
-pTm = withPos (pLam <|> pLet <|> try pPi <|> pFunOrSpine)
+pTm = withPos (pLam <|> pLet <|> try pPi <|> pFunOrSpine <|> pAbsurd)
 
 pSrc :: Parser Tm
 pSrc = ws *> pTm <* eof

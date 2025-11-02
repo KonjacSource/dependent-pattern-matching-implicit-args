@@ -11,6 +11,7 @@ data Tm
   | Lam Name Icit Tm
   | App Tm Tm Icit
   | U
+  | Absurd Tm
   | Pi Name Icit Ty Ty
   | Let Name Ty Tm Tm
   | Meta MetaVar
@@ -30,6 +31,7 @@ noMetas = \case
   Lam _ _ t -> noMetas t
   App t u _ -> noMetas t && noMetas u
   U -> True
+  Absurd _ -> True
   Pi _ _ a b -> noMetas a && noMetas b
   Let _ a t u -> noMetas a && noMetas t && noMetas u
   Meta _ -> False

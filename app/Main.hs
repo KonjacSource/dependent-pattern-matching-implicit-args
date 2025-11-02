@@ -54,6 +54,11 @@ preludeSrc = unlines
   , "    (m : (x : A) -> P x x (refl x))"
   , "    (a : A) (b : A) (p : Id a b) -> P a b p"
   , "| A P m a b (refl x) = m x"
+
+  , "data Void : U where"
+
+  , "def the : (A : U) -> A -> A"
+  , "| A x = x"
   ]
 
 --------------------------------------------------------------------------------

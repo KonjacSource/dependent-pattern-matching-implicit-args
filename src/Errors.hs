@@ -25,6 +25,7 @@ data ElabError
   | InferNamedLam
   | NoNamedImplicitArg Name
   | IcitMismatch Icit Icit
+  | NotAbsurd Ty  
   deriving (Show, Exception)
 
 data DefElabError 
@@ -66,6 +67,8 @@ displayError file (Error cxt e) = do
         IcitMismatch i i' -> printf (
           "Function icitness mismatch: expected %s, got %s.")
           (show i) (show i')
+        NotAbsurd ty ->
+          "Type is not absurd: " ++ showTm cxt ty
 
   printf "%s:%d:%d:\n" path linum colnum
   printf "%s |\n"    lpad
@@ -98,6 +101,8 @@ displayError file (DefError cxt e) = do
           "Clauses have different arities"
         UnsolvedMetaInFuncDef func_name ->
           printf "Unsolved meta in function definition %s" func_name
+        NameNotFoundOrMismatch name ->
+          printf "Name not found or mismatch: %s" name
   printf "%s:%d:%d:\n" path linum colnum
   printf "%s |\n"    lpad
   printf "%s | %s\n" lnum (lines file !! (linum - 1))

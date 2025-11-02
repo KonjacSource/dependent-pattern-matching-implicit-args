@@ -8,7 +8,10 @@ data Imf : {A B : U} (f : A -> B) (_ : B) -> U where
 | imf : {A B : U} {f : A -> B} (x : A) -> Imf f (f x) 
 
 def invf : {A B : U} (f : A -> B) (y : B) -> Imf f y -> A  
--- | f y (imf x) = x
+| f y (imf x) = x
+
+def neq1 : Id (suc zero) zero -> U
+| p = absurd p
 
 -- I don't know if there should be a case refl for type Id {_B} (f x) (g x)
 -- def test : {A B : U} (f g : A -> B) (x : A) -> Id (f x) (g x) -> Id f g 

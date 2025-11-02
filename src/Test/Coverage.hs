@@ -12,7 +12,6 @@ import Evaluation
 import Metacontext
 import Parser
 import Pretty
-import Elaboration
 import Value
 import Syntax
 
@@ -24,6 +23,7 @@ import Data.Char (isSpace)
 import Definition (Def(DefFunc))
 import Errors (TopLevelError(..))
 import System.IO.Unsafe
+import Elaboration
 
 
 preludeSrc = unlines

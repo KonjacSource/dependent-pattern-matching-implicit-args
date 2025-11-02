@@ -19,7 +19,7 @@ data MatchResult
   -- ^ Match stuck on a variable or function or unsolved meta, return the blocker info, this will be used in coverage checking.
   | MatchFailed    -- ^ c != c'
 
-data MatchBlocker = BVar Lvl | BFunc FuncDef | BFlex MetaVar
+data MatchBlocker = BVar Lvl | BFunc FuncDef | BFlex MetaVar | BAbsurd
 
 -- | Note: Although pattern matching in this project always occurs at the top level,
 -- | we may extend the system to add modules or inline `match` expressions.
@@ -33,6 +33,7 @@ match1 defs env pat val = case (pat, val) of
   (PatCon _ _, VData _ _)   -> MatchFailed
   (PatCon _ _, VLam {})     -> MatchFailed
   (PatCon _ _, VPi {})      -> MatchFailed
+  (PatCon _ _, VAbsurd {})  -> MatchStuck BAbsurd 
   (PatCon _ _, VRigid x _)  -> MatchStuck (BVar x)
   (PatCon _ _, VFunc f _)   -> MatchStuck (BFunc f)
   (PatCon _ _, VHold f _)   -> MatchStuck (BFunc f)
@@ -103,6 +104,7 @@ eval defs env = \case
   Pi x i a b         -> VPi x i (eval defs env a) (Closure env b)
   Let _ _ t u        -> eval defs (env :> eval defs env t) u
   U                  -> VU
+  Absurd t           -> VAbsurd (eval defs env t)
   Meta m             -> vMeta env m 
   InsertedMeta m bds -> vAppBDs defs env (vMeta env m) bds
   Call f             -> case M.lookup f defs of
@@ -127,6 +129,9 @@ force' = force . defs
 lvl2Ix :: Lvl -> Lvl -> Ix
 lvl2Ix (Lvl l) (Lvl x) = Ix (l - x - 1)
 
+ix2Lvl :: Lvl -> Ix -> Lvl
+ix2Lvl (Lvl l) (Ix x) = Lvl (l - x - 1)
+
 quoteSp :: Defs -> Env -> Lvl -> Tm -> Spine -> Tm
 quoteSp defs env l t = \case
   []           -> t
@@ -139,6 +144,7 @@ quote defs env l t = case force defs t of
   VLam x i t   -> Lam x i (quote defs (VVar l : env) (l + 1) ((defs, t) $$ VVar l))
   VPi x i a b  -> Pi x i (quote defs env l a) (quote defs (VVar l : env) (l + 1) ((defs, b) $$ VVar l))
   VU           -> U
+  VAbsurd v    -> Absurd (quote defs env l v)
   VCons c sp   -> quoteSp defs env l (Call (consName c)) sp
   VFunc f sp   -> quoteSp defs env l (Call (funcName f)) sp
   VHold f sp   -> quoteSp defs env l (Call (funcName f)) sp
@@ -161,6 +167,7 @@ fv def dep = nub . \case
   VRigid l sp -> l : fvSp def dep sp
   VLam x _ b -> filter (< dep) $ fv def (dep + 1) ((def, b) $$ (VVar dep))
   VPi x _ t b -> fv def dep t ++ filter (< dep) (fv def (dep + 1) ((def, b) $$ (VVar dep)))
+  VAbsurd v -> fv def dep v
   VCons _ sp -> fvSp def dep sp 
   VFunc _ sp -> fvSp def dep sp 
   VHold _ sp -> fvSp def dep sp 

@@ -8,6 +8,7 @@ data Tm
   | Lam Name (Either Name Icit) Tm -- \x. t | \{x}. t | \{x = y}. t
   | App Tm Tm (Either Name Icit)   -- t u  | t {u} | t {x = u}
   | U                              -- U
+  | Absurd Tm                      -- absurd x
   | Pi Name Icit Tm Tm             -- (x : A) -> B | {x : A} -> B
   | Let Name Tm Tm Tm              -- let x : A = t; u
   | SrcPos SourcePos Tm            -- source position for error reporting
@@ -22,6 +23,7 @@ stripPos = \case
   Lam x i t -> Lam x i (stripPos t)
   App t u i    -> App (stripPos t) (stripPos u) i
   U            -> U
+  Absurd x     -> Absurd (stripPos x)
   Pi x i a b   -> Pi x i (stripPos a) (stripPos b)
   Let x a t u  -> Let x (stripPos a) (stripPos t) (stripPos u)
   SrcPos _ t   -> stripPos t
