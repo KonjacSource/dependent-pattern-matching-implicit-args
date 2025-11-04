@@ -14,6 +14,8 @@ import Syntax
 import Value
 import Cxt.Type 
 import Definition
+import Cxt (showCxt, showVal)
+import Debug.Trace (trace)
 
 -- Unification
 --------------------------------------------------------------------------------
@@ -98,22 +100,35 @@ unifySp defs env l sp sp' = case (sp, sp') of
 
 unify :: Defs -> Env -> Lvl -> Val -> Val -> IO ()
 unify defs env l t u = case (force defs t, force defs u) of
-  (VLam _ _ t , VLam _ _ t'    ) -> unify defs (VVar l:env) (l + 1) ((defs, t) $$ VVar l) ((defs, t') $$ VVar l)
-  (t          , VLam _ i t'    ) -> unify defs (VVar l:env) (l + 1) (vApp defs (VVar l:env) t (VVar l) i) ((defs, t') $$ VVar l)
-  (VLam _ i t , t'             ) -> unify defs (VVar l:env) (l + 1) ((defs, t) $$ VVar l) (vApp defs (VVar l:env) t' (VVar l) i)
-  (VU         , VU             ) -> pure ()
-  (VPi x i a b, VPi x' i' a' b') | i == i' -> unify defs env l a a' >> unify defs (VVar l:env) (l + 1) ((defs, b) $$ VVar l) ((defs, b') $$ VVar l)
-  (VRigid x sp, VRigid x' sp'  ) | x == x' -> unifySp defs env l sp sp'
-  (VFlex m sp _, VFlex m' sp' _) | m == m' -> unifySp defs env l sp sp'
-  (VFlex m sp _, t'            ) -> solve defs l m sp t'
-  (t          , VFlex m' sp' _ ) -> solve defs l m' sp' t
-  (VFunc f sp , VFunc f' sp'   ) | funcName f == funcName f' -> unifySp defs env l sp sp'
-  (VHold f sp , VHold f' sp'   ) | funcName f == funcName f' -> unifySp defs env l sp sp'
-  (VFunc f sp , VHold f' sp'   ) | funcName f == funcName f' -> unifySp defs env l sp sp'
-  (VHold f sp , VFunc f' sp'   ) | funcName f == funcName f' -> unifySp defs env l sp sp'
-  (VCons c sp , VCons c' sp'   ) | consName c == consName c' -> unifySp defs env l sp sp' 
-  (VData d sp , VData d' sp'   ) | dataName d == dataName d' -> unifySp defs env l sp sp'
-  _                            -> throwIO UnifyError  -- rigid mismatch error
+    (VLam _ _ t , VLam _ _ t'    ) -> unify defs (VVar l:env) (l + 1) ((defs, t) $$ VVar l) ((defs, t') $$ VVar l)
+    (t          , VLam _ i t'    ) -> unify defs (VVar l:env) (l + 1) (vApp defs (VVar l:env) t (VVar l) i) ((defs, t') $$ VVar l)
+    (VLam _ i t , t'             ) -> unify defs (VVar l:env) (l + 1) ((defs, t) $$ VVar l) (vApp defs (VVar l:env) t' (VVar l) i)
+    (VU         , VU             ) -> pure ()
+    (VPi x i a b, VPi x' i' a' b') | i == i' -> unify defs env l a a' >> unify defs (VVar l:env) (l + 1) ((defs, b) $$ VVar l) ((defs, b') $$ VVar l)
+    (VRigid x sp, VRigid x' sp'  ) | x == x' -> unifySp defs env l sp sp'
+    (VFlex m sp _, VFlex m' sp' _) | m == m' -> unifySp defs env l sp sp'
+    (VFlex m sp _, t'            ) -> solve defs l m sp t'
+    (t          , VFlex m' sp' _ ) -> solve defs l m' sp' t
+    (VFunc f sp , VFunc f' sp'   ) -> unifyFn (f, sp) (f', sp')
+    (VHold f sp , VHold f' sp'   ) -> unifyFn (f, sp) (f', sp')
+    (VFunc f sp , VHold f' sp'   ) -> unifyFn (f, sp) (f', sp') 
+    (VHold f sp , VFunc f' sp'   ) -> unifyFn (f, sp) (f', sp')
+    
+    (t          , VFunc f  sp    ) -> unifyWithEvalFn t (f, sp)
+    (VFunc f  sp, t              ) -> unifyWithEvalFn t (f, sp)
+    (t          , VHold f  sp    ) -> unifyWithEvalFn t (f, sp)
+    (VHold f  sp, t              ) -> unifyWithEvalFn t (f, sp)
 
+    (VCons c sp , VCons c' sp'   ) | consName c == consName c' -> unifySp defs env l sp sp' 
+    (VData d sp , VData d' sp'   ) | dataName d == dataName d' -> unifySp defs env l sp sp'
+    _                            -> throwIO UnifyError  -- rigid mismatch error
+  where 
+    unifyFn :: (FuncDef, Spine) -> (FuncDef, Spine) -> IO ()
+    unifyFn (f, sp) (f', sp') | funcName f == funcName f' = unifySp defs env l sp sp'
+                              | otherwise                 = throwIO UnifyError
+    unifyWithEvalFn :: Val -> (FuncDef, Spine) -> IO ()
+    unifyWithEvalFn t (f, sp) = case evalFun' defs env f sp of 
+                                  Just v' -> unify defs env l t v'
+                                  Nothing -> trace (show t ++ "\n" ++ funcName f ++ " " ++ show sp) $ throwIO UnifyError 
 unifyCxt :: Cxt -> Val -> Val ->  IO ()
 unifyCxt cxt = unify (defs cxt) (env cxt) (lvl cxt)

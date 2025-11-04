@@ -42,7 +42,7 @@ match1 defs env pat val = case (pat, val) of
 match :: Defs -> Env -> [(Pattern, Icit)] -> Spine -> MatchResult
 match defs env pats vals = go defs env pats (reverse vals) where
   go defs env [] [] = MatchSuc env
-  go defs env pats@((p, i):ps) vals@(((a, i'):as)) 
+  go defs env pats@((p, i):ps) vals@(((force defs -> a, i'):as)) 
     | i == i' = 
       case match1 defs env p a of
         MatchFailed -> MatchFailed
@@ -78,6 +78,18 @@ evalFun defs env f (c:cs) sp
         MatchFailed -> evalFun defs env f cs sp --Failed
         MatchStuck _ -> VHold f sp       -- Stucked
         MatchSuc env' -> eval defs env' (clauseRhs c) -- Succeeded
+
+-- Return Nothing if stucked or no matching clause
+evalFun' :: HasCallStack => Defs -> Env -> FuncDef -> Spine -> Maybe Val
+evalFun' defs env f sp = go (funcClauses f) where
+  go [] = Nothing
+  go (c:cs)
+    | length sp < arity f = Nothing -- Wait
+    | otherwise = -- `length sp == arity f`
+        case match defs env (clausePatterns c) sp of
+          MatchFailed -> go cs --Failed
+          MatchStuck _ -> Nothing       -- Stucked
+          MatchSuc env' -> Just $ eval defs env' (clauseRhs c) -- Succeeded
 
 vAppSp :: Defs -> Env -> Val -> Spine -> Val
 vAppSp defs env t = \case

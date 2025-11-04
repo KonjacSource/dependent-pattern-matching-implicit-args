@@ -1,0 +1,64 @@
+-- STLC
+mutual 
+
+  data Ctx : U 
+  data Ty : U 
+  data Tm : (G : Ctx) -> Ty -> U
+  data Ix : Ctx -> U
+  def lookup : {G : Ctx} -> Ix G -> Ty 
+
+begin
+
+  data Ctx 
+  | empty : Ctx
+  | extend : (G : Ctx) -> Ty -> Ctx
+
+  data Ty 
+  | top : Ty 
+  | arr : Ty -> Ty -> Ty
+
+  data Tm 
+  | tt : {G : Ctx} -> Tm G top
+  | lam : {G : Ctx} {A B : Ty} -> (Tm (extend G A) B) -> Tm G (arr A B)
+  | app : {G : Ctx} {A B : Ty} -> (Tm G (arr A B)) -> (Tm G A) -> Tm G B
+  | var : {G : Ctx} (i : Ix G) -> Tm G (lookup i)
+  | wk : {G : Ctx} {A B : Ty} -> Tm G A -> Tm (extend G B) A
+
+  data Ix 
+  | iz : {G : Ctx} {A : Ty} -> Ix (extend G A)
+  | is : {G : Ctx} {A : Ty} -> Ix G -> Ix (extend G A)
+
+  def lookup
+  | {extend G A} iz = A 
+  | (is i) = lookup i
+
+end
+
+data Val : {A : Ty} -> Tm empty A -> U where
+| vlam : {A B : Ty} (t : Tm (extend empty A) B) -> Val (lam t)
+| vtt  :  Val tt
+
+-- Substitution from empty context. 
+data Sub : Ctx -> Ctx -> U where
+| sempty : {G : Ctx} -> Sub G empty
+| sextend : {D G : Ctx} {A : Ty} -> Sub D G -> Tm D A -> Sub D (extend G A)
+| sshift : {D G : Ctx} -> Sub D G -> (A : Ty) -> Sub (extend D A) (extend G A)
+
+def fromEmp : {G : Ctx} {A : Ty} -> Tm empty A -> Tm G A
+| {empty} t = t
+| {extend G B} t = wk (fromEmp t)
+
+def applySub : {D G : Ctx} {A : Ty} -> Sub D G -> Tm G A -> Tm D A
+| sempty t = fromEmp t
+| g tt = tt
+| g (lam t) = lam (applySub (sshift g _) t)
+| g (app t1 t2) = app (applySub g t1) (applySub g t2)
+| (sextend g a) (var iz) = a
+| (sextend g a) (var (is i)) = applySub g (var i)
+| (sextend g a) (wk t) = applySub g t
+| (sshift g A) (var iz) = var (iz)
+| (sshift g A) (var (is i)) = wk (applySub g (var i))
+| (sshift g A) (wk t) = wk (applySub g t)
+
+-- Automatally have preservation.
+data step1 : {A : Ty} -> Tm empty A -> Tm empty A -> U where
