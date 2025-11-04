@@ -64,7 +64,7 @@ prettyTm prec = go prec where
                                      (". "++) . go letp ns t
 
     U                         -> ("U"++)
-
+    Absurd t                  -> par p appp $ ("absurd "++) . go atomp ns t
     Pi "_" Expl a b           -> par p pip $ go appp ns a . (" → "++) . go pip (ns:>"_") b
 
     Pi (fresh ns -> x) i a b  -> par p pip $ piBind ns x i a . goPi (ns:>x) b where

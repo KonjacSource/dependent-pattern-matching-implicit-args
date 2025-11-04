@@ -1,7 +1,6 @@
 module Cxt.Type where 
 
 import Common
-import Syntax
 import Value
 import qualified Data.Map as M
 import Definition

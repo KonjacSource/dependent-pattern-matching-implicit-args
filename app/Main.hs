@@ -59,6 +59,13 @@ preludeSrc = unlines
 
   , "def the : (A : U) -> A -> A"
   , "| A x = x"
+
+  , "data Sum : U -> U -> U where"
+  , "| inl : {A B : U} -> A -> Sum A B"
+  , "| inr : {A B : U} -> B -> Sum A B"
+
+  , "data Ex : (A : U) -> (A -> U) -> U where"
+  , "| ex : {A : U} {P : A -> U} (x : A) -> P x -> Ex A P"
   ]
 
 --------------------------------------------------------------------------------
@@ -181,7 +188,7 @@ repl' ori_defs = do
         src <- readFile fp 
         prog <- parseStringProgram fp src
         defs <- readIORef defsR
-        defs' <- checkProg src defs prog `catch` ((\e -> loop defsR >> error "unreachable") :: Error -> IO Defs)
+        defs' <- checkProg src defs prog `catch` ((\e -> loop defsR >> exitSuccess) :: Error -> IO Defs)
         writeIORef defsR defs'
         done <- allSolved
         if done then 

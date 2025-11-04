@@ -67,6 +67,7 @@ rename defs m pren v = go pren v where
     VLam x i t  -> Lam x i <$> go (lift pren) ((defs, t) $$ VVar (cod pren))
     VPi x i a b -> Pi x i <$> go pren a <*> go (lift pren) ((defs, b) $$ VVar (cod pren))
     VU          -> pure U
+    VAbsurd t   -> Absurd <$> go pren t
     VFunc f sp  -> goSp pren (Call (funcName f)) sp
     VHold f sp  -> goSp pren (Call (funcName f)) sp
     VData f sp  -> goSp pren (Call (dataName f)) sp

@@ -1,4 +1,3 @@
-
 module Elaboration (check, infer, unifyCatch, findType, checkPat, updateCxt, checkCover, CoverCheckingError(..), MissingPattern, splitCxt) where
 
 import Control.Exception

@@ -61,7 +61,8 @@ library
       Strict
       TupleSections
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+      GADTs
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-export-lists -Wno-unused-imports -Wno-unused-local-binds -Wno-incomplete-uni-patterns -Wno-unused-do-bind -Wno-orphans
   build-depends:
       base >=4.7 && <5
     , containers
@@ -88,7 +89,8 @@ executable dependent-pattern-matching-implicit-args-exe
       Strict
       TupleSections
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+      GADTs
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-export-lists -Wno-unused-imports -Wno-unused-local-binds -Wno-incomplete-uni-patterns -Wno-unused-do-bind -Wno-orphans -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , containers
@@ -117,7 +119,8 @@ test-suite dependent-pattern-matching-implicit-args-test
       Strict
       TupleSections
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+      GADTs
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-missing-signatures -Wno-missing-export-lists -Wno-unused-imports -Wno-unused-local-binds -Wno-incomplete-uni-patterns -Wno-unused-do-bind -Wno-orphans -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , base >=4.7 && <5

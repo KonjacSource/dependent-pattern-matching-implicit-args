@@ -34,6 +34,15 @@ ghc-options:
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
+- -Wno-unused-matches
+- -Wno-name-shadowing 
+- -Wno-missing-signatures
+- -Wno-missing-export-lists 
+- -Wno-unused-imports
+- -Wno-unused-local-binds
+- -Wno-incomplete-uni-patterns
+- -Wno-unused-do-bind
+- -Wno-orphans
 
 default-extensions:
 - DerivingVia
@@ -47,6 +56,7 @@ default-extensions:
 - Strict
 - TupleSections
 - ViewPatterns
+- GADTs
 
 library:
   source-dirs: src

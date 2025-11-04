@@ -1,4 +1,3 @@
-
 module Parser (parseString, parseStdin, parseStringProgram) where
 
 import Control.Applicative hiding (many, some)
