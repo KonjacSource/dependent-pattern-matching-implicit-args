@@ -1,6 +1,7 @@
 module DefinitionElaboration where 
 
 import qualified Presyntax as R 
+import Presyntax (RClause(..), RPattern(..), RPatterns)
 import Common
 import Syntax 
 import Value

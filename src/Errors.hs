@@ -23,6 +23,7 @@ data ElabError
   = NameNotInScope Name
   | CantUnify Tm Tm
   | InferNamedLam
+  | InferLamCase
   | NoNamedImplicitArg Name
   | IcitMismatch Icit Icit
   | NotAbsurd Ty  
@@ -62,6 +63,8 @@ displayError file (Error cxt e) = do
            "  " ++ showTm cxt t')
         InferNamedLam ->
           "Cannot infer type for lambda with named argument"
+        InferLamCase ->
+          "Cannot infer type for lambda-case expression"
         NoNamedImplicitArg name ->
           "No named implicit argument with name " ++ name
         IcitMismatch i i' -> printf (

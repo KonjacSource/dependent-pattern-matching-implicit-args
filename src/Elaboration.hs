@@ -16,7 +16,7 @@ import Syntax
 import qualified Unification as U
 import Value
 
-import qualified Presyntax as P
+import qualified Presyntax as R
 import Definition 
 import qualified Data.Map as M
 import GHC.Stack (HasCallStack)
@@ -70,10 +70,10 @@ insertUntilName cxt name act = go =<< act where
     _ ->
       throwIO $ Error cxt $ NoNamedImplicitArg name
 
-check :: Cxt -> P.Tm -> VTy -> IO Tm
+check :: Cxt -> R.Tm -> VTy -> IO Tm
 check cxt t a = case (t, force (defs cxt) a) of
 
-  (P.PrintCxt t, a) -> do 
+  (R.PrintCxt t, a) -> do 
     putStrLn (showCxt cxt)
     putStrLn (replicate 80 '-')
     -- NOTE. there might be some unsolved metas in the @a@ which can be solved soon after the check. 
@@ -81,18 +81,20 @@ check cxt t a = case (t, force (defs cxt) a) of
     putStrLn $ showVal cxt a ++ "\n\n"
     check cxt t a
 
-  (P.SrcPos pos t, a) ->
+  (R.SrcPos pos t, a) ->
     check (cxt {pos = pos}) t a
 
   -- If the icitness of the lambda matches the Pi type, check as usual
-  (P.Lam x i t, VPi x' i' a b) | either (\x -> x == x' && i' == Impl) (==i') i -> do
+  (R.Lam x i t, VPi x' i' a b) | either (\x -> x == x' && i' == Impl) (==i') i -> do
     Lam x i' <$> check (bind cxt x a) t ((defs cxt, b) $$ VVar (lvl cxt))
+  
+  (R.LamCase cls, ty) -> undefined -- TODO
 
   -- Otherwise if Pi is implicit, insert a new implicit lambda
   (t, VPi x Impl a b) -> do
     Lam x Impl <$> check (newBinder cxt x a) t ((defs cxt, b) $$ VVar (lvl cxt))
 
-  (P.Let x a t u, a') -> do
+  (R.Let x a t u, a') -> do
     a <- check cxt a VU
     let ~va = evalCxt cxt a
     t <- check cxt t va
@@ -100,16 +102,15 @@ check cxt t a = case (t, force (defs cxt) a) of
     u <- check (define cxt x vt va) u a'
     pure (Let x a t u)
   
-  (P.Absurd t, ty) -> do
+  (R.Absurd t, ty) -> do
     (t, t_ty) <- infer cxt t 
     let cxt' = bind cxt "_absurd" t_ty
     case splitCxt cxt' 0 of 
       Just [] -> pure $ Absurd t 
       _ -> throwIO $ Error cxt $ NotAbsurd (quoteCxt cxt t_ty)
-
   -- (t, VData d sp) -> undefined -- TODO
 
-  (P.Hole, a) ->
+  (R.Hole, a) ->
     freshMeta cxt
 
   (t, expected) -> do
@@ -117,18 +118,18 @@ check cxt t a = case (t, force (defs cxt) a) of
     unifyCatch cxt expected inferred
     pure t
 
-infer :: Cxt -> P.Tm -> IO (Tm, VTy)
+infer :: Cxt -> R.Tm -> IO (Tm, VTy)
 infer cxt = \case
 
-  P.PrintCxt t -> do 
+  R.PrintCxt t -> do 
     putStrLn "printing context"
     putStrLn (showCxt cxt)
     infer cxt t
 
-  P.SrcPos pos t ->
+  R.SrcPos pos t ->
     infer (cxt {pos = pos}) t
 
-  P.Var x -> do
+  R.Var x -> do
     let go ix (types :> (x', origin, a))
           | x == x' && origin == Source = pure (Var ix, a)
           | otherwise                   = go (ix + 1) types
@@ -139,16 +140,19 @@ infer cxt = \case
           Nothing -> throwIO $ Error cxt $ NameNotInScope x
     go 0 (types cxt)
 
-  P.Lam x (Right i) t -> do
+  R.Lam x (Right i) t -> do
     a <- evalCxt cxt <$> freshMeta cxt
     let cxt' = bind cxt x a
     (t, b) <- insert cxt' $ infer cxt' t
     pure (Lam x i t, VPi x i a $ closeVal cxt b)
 
-  P.Lam x Left{} t ->
+  R.Lam x Left{} t ->
     throwIO $ Error cxt InferNamedLam
 
-  P.App t u i -> do
+  R.LamCase _ -> 
+    throwIO $ Error cxt InferLamCase
+
+  R.App t u i -> do
 
     -- choose implicit insertion
     (i, t, tty) <- case i of
@@ -177,15 +181,15 @@ infer cxt = \case
     u <- check cxt u a
     pure (App t u i, (defs cxt, b) $$ evalCxt cxt u)
 
-  P.U ->
+  R.U ->
     pure (U, VU)
 
-  P.Pi x i a b -> do
+  R.Pi x i a b -> do
     a <- check cxt a VU
     b <- check (bind cxt x (evalCxt cxt a)) b VU
     pure (Pi x i a b, VU)
 
-  P.Let x a t u -> do
+  R.Let x a t u -> do
     a <- check cxt a VU
     let ~va = evalCxt cxt a
     t <- check cxt t va
@@ -193,12 +197,12 @@ infer cxt = \case
     (u, b) <- infer (define cxt x vt va) u
     pure (Let x a t u, b)
 
-  P.Hole -> do
+  R.Hole -> do
     a <- evalCxt cxt <$> freshMeta cxt
     t <- freshMeta cxt
     pure (t, a)
 
-  P.Absurd t -> do 
+  R.Absurd t -> do 
     ty <- evalCxt cxt <$> freshMeta cxt
     t <- check cxt t ty 
     pure (t, ty)
@@ -346,7 +350,7 @@ updateCxt ctx x v = if length env' /= length bds' then error "!!!" else ctx {env
 -- isCons = True, if we are elaborating the patterns of a constructor.
 -- Throws `Error`, throw `DefError _ $ WrongPattern _ _` for absurd patterns, `DefError _ $ UnsurePattern _ _` for IDK patterns.
 -- TODO : Change the return type to `IO ([(Pattern, Icit)], Spine, Cxt, VTy)`
-checkPat :: Bool -> Cxt -> RPatterns -> VTy -> IO ([(Pattern, Icit)], Cxt, VTy)
+checkPat :: Bool -> Cxt -> R.RPatterns -> VTy -> IO ([(Pattern, Icit)], Cxt, VTy)
 checkPat isCons ctx [] ty 
   | isCons = case force' ctx ty of -- If we are elaborating constructor patterns, we need to make sure all implicit patterns are filled.
       VPi x Impl a b -> do
@@ -356,7 +360,7 @@ checkPat isCons ctx [] ty
         pure ((PatVar ('_':x), Impl): rps, rctx, rty)
       _ -> pure ([], ctx, ty)
   | otherwise = pure ([], ctx, ty)
-checkPat isCons ctx ((Right i, RPat c c_arg):ps) (force' ctx -> VPi x' i' (force' ctx -> a) b) | i == i' =
+checkPat isCons ctx ((Right i, R.RPat c c_arg):ps) (force' ctx -> VPi x' i' (force' ctx -> a) b) | i == i' =
   case M.lookup c (defs ctx) of
     Just (DefCons _) -> 
       case a of
@@ -455,10 +459,10 @@ splitCxt cxt x = case force' cxt (findType cxt x) of
     fmap join $ forM (dataCons d) $ \c@(c_name, c_tele, c_ix) -> do 
           -- split x to constructor c
           -- make a raw pattern
-          let makePs :: Telescope -> RPatterns 
+          let makePs :: Telescope -> R.RPatterns 
               makePs [] = []
-              makePs ((x, i, _):xs) = (Right i, RPat ("_cov_chk_"++x) []) : makePs xs
-          let p = RPat c_name (makePs c_tele)
+              makePs ((x, i, _):xs) = (Right i, R.RPat ("_cov_chk_"++x) []) : makePs xs
+          let p = R.RPat c_name (makePs c_tele)
           -- check the pattern against x's type
           cp <- (checkPat False cxt [(Right Expl, p)] (VPi "_" Expl x_ty (Closure (env cxt) U)) >>= pure . Just)
                                 `catch` \case 

@@ -19,7 +19,7 @@ data MatchResult
   -- ^ Match stuck on a variable or function or unsolved meta, return the blocker info, this will be used in coverage checking.
   | MatchFailed    -- ^ c != c'
 
-data MatchBlocker = BVar Lvl | BFunc FuncDef | BFlex MetaVar | BAbsurd
+data MatchBlocker = BVar Lvl | BFunc FuncDef | BFlex MetaVar | BAbsurd | BLamCase
 
 -- | Note: Although pattern matching in this project always occurs at the top level,
 -- | we may extend the system to add modules or inline `match` expressions.
@@ -33,7 +33,9 @@ match1 defs env pat val = case (pat, val) of
   (PatCon _ _, VData _ _)   -> MatchFailed
   (PatCon _ _, VLam {})     -> MatchFailed
   (PatCon _ _, VPi {})      -> MatchFailed
-  (PatCon _ _, VAbsurd {})  -> MatchStuck BAbsurd 
+  (PatCon _ _, VAbsurd _)  -> MatchStuck BAbsurd 
+  (PatCon _ _, VLamCase {}) -> MatchStuck BLamCase
+  (PatCon _ _, VLamCaseHold {}) -> MatchStuck BLamCase
   (PatCon _ _, VRigid x _)  -> MatchStuck (BVar x)
   (PatCon _ _, VFunc f _)   -> MatchStuck (BFunc f)
   (PatCon _ _, VHold f _)   -> MatchStuck (BFunc f)
@@ -64,6 +66,11 @@ vApp defs env t ~u i = case force defs t of
     | otherwise -> let (sp', rest) = splitAt (arity f) (sp :> (u,i)) in
         vAppSp defs env (evalFun defs env f (funcClauses f) sp') rest
   VHold f sp -> VHold f (sp :> (u,i))
+  VLamCase env' cls sp 
+    | length sp + 1 < arity cls -> evalLamCase defs env cls (sp :> (u, i))
+    | otherwise -> let (sp', rest) = splitAt (arity cls) (sp :> (u,i)) in
+        vAppSp defs env (evalLamCase defs env cls sp') rest
+  VLamCaseHold env' cls sp -> VLamCaseHold cls (sp :> (u,i))
   VCons c sp -> VCons c (sp :> (u,i))
   VData d sp -> VData d (sp :> (u,i))
   t           -> error "impossible"
@@ -79,12 +86,33 @@ evalFun defs env f (c:cs) sp
         MatchStuck _ -> VHold f sp       -- Stucked
         MatchSuc env' -> eval defs env' (clauseRhs c) -- Succeeded
 
+evalLamCase :: HasCallStack => Defs -> Env -> [Clause] -> Spine -> Val
+evalLamCase defs env [] sp = VLamCaseHold [] sp -- No matchable clause
+evalLamCase defs env (c:cs) sp
+  | length sp < arity (c:cs) = VLamCase (c:cs) sp -- Wait
+  | otherwise = -- `length sp == arity f`
+      case match defs env (clausePatterns c) sp of
+        MatchFailed -> evalLamCase defs env cs sp --Failed
+        MatchStuck _ -> VLamCaseHold (c:cs) sp       -- Stucked
+        MatchSuc env' -> eval defs env' (clauseRhs c) -- Succeeded
+
 -- Return Nothing if stucked or no matching clause
 evalFun' :: HasCallStack => Defs -> Env -> FuncDef -> Spine -> Maybe Val
 evalFun' defs env f sp = go (funcClauses f) where
   go [] = Nothing
   go (c:cs)
     | length sp < arity f = Nothing -- Wait
+    | otherwise = -- `length sp == arity f`
+        case match defs env (clausePatterns c) sp of
+          MatchFailed -> go cs --Failed
+          MatchStuck _ -> Nothing       -- Stucked
+          MatchSuc env' -> Just $ eval defs env' (clauseRhs c) -- Succeeded
+
+evalLamCase' :: HasCallStack => Defs -> Env -> [Clause] -> Spine -> Maybe Val
+evalLamCase' defs env cls sp = go cls where
+  go [] = Nothing
+  go (c:cs)
+    | length sp < arity cls = Nothing -- Wait
     | otherwise = -- `length sp == arity f`
         case match defs env (clausePatterns c) sp of
           MatchFailed -> go cs --Failed
@@ -120,12 +148,13 @@ eval defs env = \case
   Meta m             -> vMeta env m 
   InsertedMeta m bds -> vAppBDs defs env (vMeta env m) bds
   Call f             -> case M.lookup f defs of
-                        Just (DefFunc f) 
-                          | arity f == 0 && not (null $ funcClauses f) -> eval defs env (clauseRhs (head (funcClauses f))) -- eval 0-arity function
-                          | otherwise-> VFunc f [] 
-                        Just (DefData d) -> VData d []
-                        Just (DefCons c) -> VCons c []
-                        Nothing -> error "eval: impossible"
+                          Just (DefFunc f) 
+                            | arity f == 0 && not (null $ funcClauses f) -> eval defs env (clauseRhs (head (funcClauses f))) -- eval 0-arity function
+                            | otherwise-> VFunc f [] 
+                          Just (DefData d) -> VData d []
+                          Just (DefCons c) -> VCons c []
+                          Nothing -> error "eval: impossible"
+  LamCase clauses -> VLamCase clauses []
 
 evalCxt :: HasCallStack => Cxt -> Tm -> Val
 evalCxt ctx = eval (defs ctx) (env ctx)
@@ -160,6 +189,7 @@ quote defs env l t = case force defs t of
   VCons c sp   -> quoteSp defs env l (Call (consName c)) sp
   VFunc f sp   -> quoteSp defs env l (Call (funcName f)) sp
   VHold f sp   -> quoteSp defs env l (Call (funcName f)) sp
+  VLamCase env cls sp -> quoteSp defs env l (LamCase cls) sp
   VData d sp   -> quoteSp defs env l (Call (dataName d)) sp
 
 quoteCxt :: Cxt -> Val -> Tm 

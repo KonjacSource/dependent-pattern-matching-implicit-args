@@ -61,39 +61,23 @@ dataType d = go (dataIx d) where
   go [] = U 
   go ((x,i,t):ts) = Pi x i t (go ts)
 
-data Clause = Clause
-  { clausePatterns :: [(Pattern, Icit)]
-  , clauseRhs :: Tm
-  } deriving Show
-
-data Pattern 
-  = PatVar Name
-  | PatCon Name [(Pattern, Icit)] 
-  deriving Show
-
 class Arity f where 
   arity :: f -> Int 
 
 instance Arity Clause where 
   arity = length . clausePatterns
 
+instance Arity a => Arity [a] where 
+  arity [] = 0
+  arity (x:_) = arity x
+
 instance Arity FuncDef where 
-  arity f = case funcClauses f of 
-    [] -> 0
-    (c:_) -> arity c
-
-data RClause = RClause
-  { clausePatternsR :: RPatterns
-  , clauseRhsR :: R.Tm
-  }
-
-data RPattern = RPat Name RPatterns deriving Show
-type RPatterns = [(Either Name Icit, RPattern)]
+  arity f = arity (funcClauses f)
 
 data RFuncDef = RFuncDef
   { funcNameR :: Name
   , funcTypeR :: R.Tm -- ^ Type of the function
-  , funcClausesR :: [RClause]
+  , funcClausesR :: [R.RClause]
   }
 
 type RTelescope = [(Name, Icit, R.Tm)]
@@ -107,7 +91,7 @@ data RDataDef = RDataDef
 data Header = FunHeader Name R.Tm | DataHeader Name R.Tm
   deriving Show 
 
-data Body = FunBody Name [RClause] | DataBody Name [(Name, R.Tm)]
+data Body = FunBody Name [R.RClause] | DataBody Name [(Name, R.Tm)]
 
 data RMutalBlock = RMutalBlock
   { mutualSig  :: [(SourcePos, Header)]

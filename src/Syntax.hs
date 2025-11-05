@@ -3,6 +3,16 @@ module Syntax where
 
 import Common
 
+data Clause = Clause
+  { clausePatterns :: [(Pattern, Icit)]
+  , clauseRhs :: Tm
+  } deriving Show
+
+data Pattern 
+  = PatVar Name
+  | PatCon Name [(Pattern, Icit)] 
+  deriving Show
+
 type Ty = Tm
 
 data Tm
@@ -12,6 +22,7 @@ data Tm
   | App Tm Tm Icit
   | U
   | Absurd Tm
+  | LamCase [Clause]
   | Pi Name Icit Ty Ty
   | Let Name Ty Tm Tm
   | Meta MetaVar
@@ -32,6 +43,7 @@ noMetas = \case
   App t u _ -> noMetas t && noMetas u
   U -> True
   Absurd _ -> True
+  LamCase cls -> all (\(Clause ps rhs) -> noMetas rhs) cls
   Pi _ _ a b -> noMetas a && noMetas b
   Let _ a t u -> noMetas a && noMetas t && noMetas u
   Meta _ -> False

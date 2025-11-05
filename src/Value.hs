@@ -17,6 +17,8 @@ data Val
   | VPi Name Icit ~VTy {-# unpack #-} Closure
   | VU
   | VAbsurd Val
+  | VLamCase Env [Clause] Spine
+  | VLamCaseHold Env [Clause] Spine
   | VFunc FuncDef Spine
   | VHold FuncDef Spine
   | VData DataDef Spine 

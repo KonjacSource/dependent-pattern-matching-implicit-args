@@ -75,5 +75,5 @@ data Progress : {A : Ty} -> Tm empty A -> U where
 | prVal : {A : Ty} (t : Tm empty A) -> Val t -> Progress t 
 
 -- TODO : I think I need "in term" pattern matching to do this nicely.
--- def progress : {A : Ty} (t : Tm empty A) -> Progress t
-
+def progress : {A : Ty} (t : Tm empty A) -> Progress t
+-- | 

@@ -6,6 +6,7 @@ import Common
 data Tm
   = Var Name                       -- x
   | Lam Name (Either Name Icit) Tm -- \x. t | \{x}. t | \{x = y}. t
+  | LamCase [RClause]
   | App Tm Tm (Either Name Icit)   -- t u  | t {u} | t {x = u}
   | U                              -- U
   | Absurd Tm                      -- absurd x
@@ -21,6 +22,7 @@ stripPos :: Tm -> Tm
 stripPos = \case
   Var x        -> Var x
   Lam x i t -> Lam x i (stripPos t)
+  LamCase cls  -> LamCase [RClause (clausePatternsR c) (stripPos (clauseRhsR c)) | c <- cls]
   App t u i    -> App (stripPos t) (stripPos u) i
   U            -> U
   Absurd x     -> Absurd (stripPos x)
@@ -29,3 +31,12 @@ stripPos = \case
   SrcPos _ t   -> stripPos t
   Hole         -> Hole
   PrintCxt t   -> PrintCxt (stripPos t)
+
+
+data RClause = RClause
+  { clausePatternsR :: RPatterns
+  , clauseRhsR :: Tm
+  } deriving Show
+
+data RPattern = RPat Name RPatterns deriving Show
+type RPatterns = [(Either Name Icit, RPattern)]
