@@ -182,3 +182,8 @@ Available commands:
 或者编译本项目并使用命令参数 "repl" 启动 repl。
 
 注意：在项中使用 `printcxt[e]` 或 `sorry` 来打印上下文。
+
+# 参考
+
+- András Kovács. [elaboration-zoo](https://github.com/AndrasKovacs/elaboration-zoo)
+- Ulf Norell. [Towards a practical programming language based on dependent type theory](https://www.cse.chalmers.se/~ulfn/papers/thesis.pdf)

@@ -188,3 +188,8 @@ Available commands:
 Or compile this project and use command argument "repl" to start repl.
 
 Note. use `printcxt[e]` or `sorry` in a term to print the context.
+
+# Reference
+
+- András Kovács. [elaboration-zoo](https://github.com/AndrasKovacs/elaboration-zoo)
+- Ulf Norell. [Towards a practical programming language based on dependent type theory](https://www.cse.chalmers.se/~ulfn/papers/thesis.pdf)
