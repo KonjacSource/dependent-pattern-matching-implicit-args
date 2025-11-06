@@ -107,9 +107,20 @@ check cxt t a = case (t, force (defs cxt) a) of
   (R.Absurd t, ty) -> do
     (t, t_ty) <- infer cxt t 
     let cxt' = bind cxt "_absurd" t_ty
-    case splitCxt cxt' 0 of 
+    case splitCxt cxt' (lvl cxt' - 1) of 
       Just [] -> pure $ Absurd t 
-      _ -> throwIO $ Error cxt $ NotAbsurd (quoteCxt cxt t_ty)
+      Just ctxs -> do 
+        putStrLn "Absurd context:" 
+        mapM_ (putStrLn . showCxt) ctxs
+        throwIO $ Error cxt $ NotAbsurd (quoteCxt cxt t_ty)
+      Nothing -> throwIO $ Error cxt $ NotAbsurd (quoteCxt cxt t_ty)
+
+  (R.Match t cls, ty) -> do 
+    (t', tt) <- infer cxt t
+    let lc = R.LamCase cls
+    lc' <- check cxt lc (varr cxt tt ty)
+    pure $ App lc' t' Expl
+  
   -- (t, VData d sp) -> undefined -- TODO
 
   (R.Hole, a) ->
@@ -152,6 +163,9 @@ infer cxt = \case
     throwIO $ Error cxt InferNamedLam
 
   R.LamCase _ -> 
+    throwIO $ Error cxt InferLamCase
+
+  R.Match t cls -> 
     throwIO $ Error cxt InferLamCase
 
   R.App t u i -> do

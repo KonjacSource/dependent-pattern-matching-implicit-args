@@ -269,3 +269,6 @@ updateSp :: Cxt -> Spine -> Spine
 updateSp ctx = \case
   []           -> []
   sp :> (v, i) -> updateSp ctx sp :> (updateVal ctx v, i)
+
+varr :: Cxt -> VTy -> VTy -> VTy
+varr ctx a b = VPi "_" Expl a (Closure (env ctx) $ quote (defs ctx) (VVar (lvl ctx) : env ctx) (lvl ctx + 1) b)

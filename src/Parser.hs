@@ -144,7 +144,7 @@ pMatch = do
   pKeyword "with"
   cls <- some pClause
   pKeyword "end"
-  pure $ App (LamCase cls) t (Right Expl)
+  pure $ Match t cls
 
 pTm :: Parser Tm
 pTm = withPos (pLam <|> pLet <|> try pPi <|> pFunOrSpine <|> pAbsurd <|> pLamCase <|> pMatch)
