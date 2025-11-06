@@ -138,7 +138,7 @@ def applySub : {D G : Ctx} {A : Ty} -> Sub D G -> Tm G A -> Tm D A
 | (sshift g A) (var (is i)) = wk (applySub g (var i))
 | (sshift g A) (wk t) = wk (applySub g t)
 
--- Automatally have preservation.
+-- No need to prove preservation now.
 data step1 : {A : Ty} -> Tm empty A -> Tm empty A -> U where
 | stApp : {A B : Ty} (t1 : Tm (extend empty A) B) (t2 : Tm empty A) -> step1 (app (lam t1) t2) (applySub (sextend sid t2) t1)
 | stApp1 : {A B : Ty} (t1 T1 : Tm empty (arr A B)) (t2 : Tm empty A) -> step1 t1 T1 -> step1 (app t1 t2) (app T1 t2)
