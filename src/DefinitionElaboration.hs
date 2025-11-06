@@ -21,21 +21,6 @@ import Metacontext (nextMeta)
 import Debug.Trace (trace)
 import GHC.IO (unsafePerformIO)
 
-
-
-checkCls :: HasCallStack => Cxt -> Id -> Ty -> RClause -> IO Clause
-checkCls ctx func_name func_typ (RClause rps rhs) = do
-  let func_typ' = evalCxt ctx func_typ
-  (ps, ctx', rhs_ty) <- E.checkPat False ctx rps func_typ'
-  rhs' <- E.check ctx' rhs rhs_ty
-  let rhs'' = nf (defs ctx') (env ctx') rhs'
-  -- NOTE. The @nf@ here should remove all the metas.
-  if noMetas rhs'' then 
-    pure $ Clause ps rhs''
-  else do
-    throwIO $ DefError ctx $ UnsolvedMetaInFuncDef func_name
-
-
 checkFunc1 :: Cxt -> RFuncDef -> IO FuncDef
 checkFunc1 ctx (RFuncDef func_name func_typ cls) = do 
   func_typ' <- E.check ctx func_typ VU
@@ -45,7 +30,7 @@ checkFunc1 ctx (RFuncDef func_name func_typ cls) = do
   let go = \case 
         [] -> pure [] 
         (rcls : rrest) -> do 
-          cls <- checkCls ctx func_name func_typ'' rcls
+          cls <- E.checkCls ctx func_name func_typ'' rcls
           rest <- go rrest 
           pure $ cls : rest
   cls' <- go cls

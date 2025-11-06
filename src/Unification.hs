@@ -32,6 +32,10 @@ lift :: PartialRenaming -> PartialRenaming
 lift (PRen dom cod ren) =
   PRen (dom + 1) (cod + 1) (IM.insert (unLvl cod) dom ren)
 
+liftN :: Int -> PartialRenaming -> PartialRenaming
+liftN 0 pren = pren
+liftN n pren = liftN (n - 1) (lift pren)
+
 -- | @invert : (Γ : Cxt) → (spine : Sub Δ Γ) → PRen Γ Δ@
 invert :: Defs -> Lvl -> Spine -> IO PartialRenaming
 invert defs gamma sp = do
@@ -51,6 +55,13 @@ invert defs gamma sp = do
 rename :: Defs -> MetaVar -> PartialRenaming -> Val -> IO Tm
 rename defs m pren v = go pren v where
 
+  goCls :: PartialRenaming -> Env -> Clause -> IO Clause
+  goCls pren env c@(Clause ps rhs) = do 
+    let (cnt, vs) = countVarPat (cod pren) c
+    let pren' = liftN cnt pren
+    rhs' <- go pren' (eval defs (map VVar vs ++ env) rhs)
+    pure $ Clause ps rhs'
+    
   goSp :: PartialRenaming -> Tm -> Spine -> IO Tm
   goSp pren t []             = pure t
   goSp pren t (sp :> (u, i)) = App <$> goSp pren t sp <*> go pren u <*> pure i
@@ -68,6 +79,14 @@ rename defs m pren v = go pren v where
     VPi x i a b -> Pi x i <$> go pren a <*> go (lift pren) ((defs, b) $$ VVar (cod pren))
     VU          -> pure U
     VAbsurd t   -> Absurd <$> go pren t
+
+    VLamCase     env cls sp -> do 
+      cls' <- mapM (goCls pren env) cls
+      pure $ LamCase cls'
+    VLamCaseHold env cls sp -> do 
+      cls' <- mapM (goCls pren env) cls
+      pure $ LamCase cls'
+
     VFunc f sp  -> goSp pren (Call (funcName f)) sp
     VHold f sp  -> goSp pren (Call (funcName f)) sp
     VData f sp  -> goSp pren (Call (dataName f)) sp

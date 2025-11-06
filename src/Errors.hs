@@ -27,6 +27,7 @@ data ElabError
   | NoNamedImplicitArg Name
   | IcitMismatch Icit Icit
   | NotAbsurd Ty  
+  | UnsolvedMetaInLambdaCase 
   deriving (Show, Exception)
 
 data DefElabError 
@@ -72,7 +73,9 @@ displayError file (Error cxt e) = do
           (show i) (show i')
         NotAbsurd ty ->
           "Type is not absurd: " ++ showTm cxt ty
-
+        UnsolvedMetaInLambdaCase ->
+          "Unsolved meta in lambda-case expression"
+          
   printf "%s:%d:%d:\n" path linum colnum
   printf "%s |\n"    lpad
   printf "%s | %s\n" lnum (lines file !! (linum - 1))

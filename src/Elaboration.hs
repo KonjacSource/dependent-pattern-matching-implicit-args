@@ -1,4 +1,4 @@
-module Elaboration (check, infer, unifyCatch, findType, checkPat, updateCxt, checkCover, CoverCheckingError(..), MissingPattern, splitCxt) where
+module Elaboration (check, infer, unifyCatch, findType, checkPat, updateCxt, checkCover, CoverCheckingError(..), MissingPattern, splitCxt, checkCls) where
 
 import Control.Exception
 import Control.Monad
@@ -88,7 +88,9 @@ check cxt t a = case (t, force (defs cxt) a) of
   (R.Lam x i t, VPi x' i' a b) | either (\x -> x == x' && i' == Impl) (==i') i -> do
     Lam x i' <$> check (bind cxt x a) t ((defs cxt, b) $$ VVar (lvl cxt))
   
-  (R.LamCase cls, ty) -> undefined -- TODO
+  (R.LamCase cls, ty) -> do
+    cls' <- mapM (checkLamCls cxt ty) cls
+    pure $ LamCase cls' 
 
   -- Otherwise if Pi is implicit, insert a new implicit lambda
   (t, VPi x Impl a b) -> do
@@ -345,6 +347,28 @@ updateCxt ctx x v = if length env' /= length bds' then error "!!!" else ctx {env
     checkBD _ = Defined
   
   bds' = genBDs [ (Ix x, v) | (x, v) <- zip [0 .. length env' - 1] env' ]
+
+checkCls :: HasCallStack => Cxt -> Id -> Ty -> R.RClause -> IO Clause
+checkCls ctx func_name func_typ (R.RClause rps rhs) = do
+  let func_typ' = evalCxt ctx func_typ
+  (ps, ctx', rhs_ty) <- checkPat False ctx rps func_typ'
+  rhs' <- check ctx' rhs rhs_ty
+  let rhs'' = nf (defs ctx') (env ctx') rhs'
+  -- NOTE. The @nf@ here should remove all the metas.
+  if noMetas rhs'' then 
+    pure $ Clause ps rhs''
+  else do
+    throwIO $ DefError ctx $ UnsolvedMetaInFuncDef func_name
+
+checkLamCls :: HasCallStack => Cxt -> VTy -> R.RClause -> IO Clause
+checkLamCls ctx fty (R.RClause rps rhs) = do 
+  (ps, ctx', rhs_ty) <- checkPat False ctx rps fty
+  rhs' <- check ctx' rhs rhs_ty
+  let rhs'' = nf (defs ctx') (env ctx') rhs'
+  if noMetas rhs'' then 
+    pure $ Clause ps rhs''
+  else do
+    throwIO $ Error ctx $ UnsolvedMetaInLambdaCase
 
 -- Pattern match against given type, returning the rest type (rhs type) and rhs Cxt.
 -- isCons = True, if we are elaborating the patterns of a constructor.

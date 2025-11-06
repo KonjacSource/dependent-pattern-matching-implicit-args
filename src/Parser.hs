@@ -38,8 +38,16 @@ brackets p   = char '[' *> p <* char ']'
 pArrow     = symbol "→" <|> symbol "->"
 pBind      = pIdent <|> symbol "_"
 
+kwList :: [String]
+kwList = [ "let", "λ", "U"
+         , "def", "data", "where"
+         , "printcxt", "sorry", "mutual"
+         , "begin", "end", "absurd"
+         , "fun", "match", "with"
+         ]
+
 keyword :: String -> Bool
-keyword x = x == "let" || x == "λ" || x == "U" || x == "def" || x == "data" || x == "where" || x == "printcxt" || x == "sorry" || x == "mutual" || x == "begin" || x == "end" || x == "absurd"
+keyword x = x `elem` kwList
 
 pIdent :: Parser Name
 pIdent = try $ do
@@ -123,8 +131,23 @@ pAbsurd = do
   t <- pTm
   pure $ Absurd t
 
+pLamCase :: Parser Tm 
+pLamCase = do
+  pKeyword "fun"
+  cls <- some pClause
+  pure $ LamCase cls
+
+pMatch :: Parser Tm
+pMatch = do
+  pKeyword "match"
+  t <- pTm
+  pKeyword "with"
+  cls <- some pClause
+  pKeyword "end"
+  pure $ App (LamCase cls) t (Right Expl)
+
 pTm :: Parser Tm
-pTm = withPos (pLam <|> pLet <|> try pPi <|> pFunOrSpine <|> pAbsurd)
+pTm = withPos (pLam <|> pLet <|> try pPi <|> pFunOrSpine <|> pAbsurd <|> pLamCase <|> pMatch)
 
 pSrc :: Parser Tm
 pSrc = ws *> pTm <* eof

@@ -1,0 +1,5 @@
+def Add : Nat -> Nat -> Nat = 
+  fun
+  | zero m = m 
+  | (suc n) m = suc (Add n m)
+
