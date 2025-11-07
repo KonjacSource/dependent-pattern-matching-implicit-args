@@ -90,7 +90,9 @@ check cxt t a = case (t, force (defs cxt) a) of
   
   (R.LamCase cls, ty) -> do
     cls' <- mapM (checkLamCls cxt ty) cls
-    pure $ LamCase cls' 
+    case checkCover cxt ty (arity cls') (map clausePatterns cls') of
+      Left err ->  throwIO $ Error cxt LambdaCaseUnCover
+      Right () -> pure $ LamCase cls' 
 
   -- Otherwise if Pi is implicit, insert a new implicit lambda
   (t, VPi x Impl a b) -> do

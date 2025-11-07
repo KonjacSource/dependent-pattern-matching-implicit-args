@@ -28,6 +28,7 @@ data ElabError
   | IcitMismatch Icit Icit
   | NotAbsurd Ty  
   | UnsolvedMetaInLambdaCase 
+  | LambdaCaseUnCover 
   deriving (Show, Exception)
 
 data DefElabError 
