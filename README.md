@@ -120,7 +120,7 @@ data Val : {A : Ty} -> Tm empty A -> U where
 | vlam : {A B : Ty} (t : Tm (extend empty A) B) -> Val (lam t)
 | vtt  :  Val tt
 
--- Substitution from empty context. 
+-- Substitution. 
 data Sub : Ctx -> Ctx -> U where
 | sempty : {G : Ctx} -> Sub G empty
 | sid    : {G : Ctx} -> Sub G G

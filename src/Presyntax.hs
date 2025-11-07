@@ -24,6 +24,7 @@ stripPos = \case
   Var x        -> Var x
   Lam x i t -> Lam x i (stripPos t)
   LamCase cls  -> LamCase [RClause (clausePatternsR c) (stripPos (clauseRhsR c)) | c <- cls]
+  Match t cls  -> Match (stripPos t) [RClause (clausePatternsR c) (stripPos (clauseRhsR c)) | c <- cls]
   App t u i    -> App (stripPos t) (stripPos u) i
   U            -> U
   Absurd x     -> Absurd (stripPos x)

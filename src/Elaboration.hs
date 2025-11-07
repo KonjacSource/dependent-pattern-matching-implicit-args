@@ -267,9 +267,9 @@ Using de Bruijn index and level, it looks like,
 
 Name  | Index  | Val (Level)
 -------------------------------
-u     | 0      | VVar 2
-y     | 1      | VVar 2 
-x     | 2      | VVar 2
+u     | 0      | VVar 2 <-╮<╮
+y     | 1      | VVar 2 --╯ |
+x     | 2      | VVar 2 ----╯
 
 The weired thing is that the some of the outer variables are assigned by inner values.
 This would not be a problem when we implementing it, since we are using de Bruijn levels as values.
@@ -339,7 +339,7 @@ updateCxt ctx x v = if length env' /= length bds' then error "!!!" else ctx {env
   changeTail :: [a] -> [a] -> [a]
   changeTail orig new = take (length orig - length new) orig ++ new
 
-  -- 只更换了 x 的值的语境.
+  -- The enviroment where only x changed.
   env2 = postenv ++ v : prenv 
 
   -- Use the context above to update the parts of the context affected by it.
@@ -350,7 +350,7 @@ updateCxt ctx x v = if length env' /= length bds' then error "!!!" else ctx {env
   refresh (v:es) ((x,ori,t):tys) = 
     let (es', tys') = refresh es tys 
         env'' = changeTail env2 es' 
-    in (freshVal def env1 env'' v :es', (x, ori,freshVal def env1 env'' t): tys')
+    in (freshVal def env1 env'' v:es', (x, ori, freshVal def env1 env'' t):tys')
   refresh _ _ = error "refresh: impossible"
 
   (env', typ') = refresh env1 typ 
