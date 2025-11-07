@@ -34,7 +34,7 @@
 
 以下是硬编码在 `app/Main.hs` 中的 prelude 定义。
 
-```agda
+```scala
 data Nat where
 | zero : Nat
 | suc  : Nat -> Nat
@@ -63,7 +63,7 @@ def append : {A : U} {n m : Nat} -> Vec A n -> Vec A m -> Vec A (add n m)
 
 这是一个归纳-归纳类型和归纳-递归类型的示例.
 
-```idris
+```scala
 mutual 
 
   data Ctx : U 
@@ -109,7 +109,7 @@ def tm1 : Tm G1 top =
 
 我们可以用此定义来证明 STLC 的可靠性.
 
-```idris
+```scala
 data Val : {A : Ty} -> Tm empty A -> U where
 | vlam : {A B : Ty} (t : Tm (extend empty A) B) -> Val (lam t)
 | vtt  :  Val tt
