@@ -30,7 +30,7 @@ begin
   | is : {G : Ctx} {A : Ty} -> Ix G -> Ix (extend G A)
 
   def lookup
-  | {extend G A} iz = A 
+  | {extend _ A} iz = A 
   | (is i) = lookup i
 
 end

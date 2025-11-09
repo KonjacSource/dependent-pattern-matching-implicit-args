@@ -55,6 +55,9 @@ pIdent = try $ do
   guard (not (keyword x))
   x <$ ws
 
+pPatVar :: Parser Name 
+pPatVar = (char '_' >> pure "_wildcard")  <|> pIdent
+
 pKeyword :: String -> Parser ()
 pKeyword kw = do
   C.string kw
@@ -202,7 +205,7 @@ pPatterns = many pPattern'
 
 pPattern' :: Parser (Either Name Icit, RPattern)
 pPattern' =
-      (pIdent >>= \x -> pure (Right Expl, RPat x []))
+      (pPatVar >>= \x -> pure (Right Expl, RPat x []))
   <|> braces (
             try (pPattern >>= \p -> pure (Right Impl, p))
         <|> do 
@@ -214,7 +217,7 @@ pPattern' =
 
 pPattern :: Parser RPattern
 pPattern = do 
-  c <- pIdent
+  c <- pPatVar
   args <- pPatterns
   pure (RPat c args)
 
