@@ -31,7 +31,8 @@ begin
 
   def lookup
   | {extend _ A} iz = A 
-  | (is i) = lookup i
+  | {extend _ A} (is i) = lookup i
+  | {empty} x = absurd x
 
 end
 
@@ -83,3 +84,4 @@ def progress : {A : Ty} (t : Tm empty A) -> Progress t
     | (prStep t1 T1 st1) = prStep _ _ (stApp1 t1 T1 t2 st1)
     | (prDone t1 (vlam t)) = prStep _ _ (stApp t t2)
     end
+
