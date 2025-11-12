@@ -137,7 +137,10 @@ addCons :: SourcePos -> Defs -> Name ->  [(Name, R.Tm)] -> IO Defs
 addCons srcpos defs name = case M.lookup name defs of {Just (DefData d) -> go defs d; _ -> error "impossibles"} where
   go :: Defs -> DataDef -> [(Name, R.Tm)] -> IO Defs
   go defs d = \case
-    [] -> pure $ M.insert name (DefData d) defs
+    [] -> do
+      let defs1 = M.insert name (DefData d) defs
+      let defs2 = insertCons defs1 (getConstructors d)
+      pure defs2
     (c, t) : cs -> do
       t' <- nf defs [] <$> E.check (emptyCxt srcpos){defs = defs} t VU
       cons <- checkCons srcpos name defs (dataIx d) c t'
